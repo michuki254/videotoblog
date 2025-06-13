@@ -222,6 +222,7 @@ Consider exploring related topics and implementing the strategies discussed to m
         },
         body: JSON.stringify({
           url: conversionData.url,
+          primaryKeyphrase: conversionData.primaryKeyphrase,
           screenshots: [], // Let the API generate intelligent timestamps
           seo: conversionData.seo,
           headlines: conversionData.headlines,
@@ -231,6 +232,8 @@ Consider exploring related topics and implementing the strategies discussed to m
           includeFeaturedImage: conversionData.includeFeaturedImage,
           includeScreenshots: conversionData.includeScreenshots !== 'none', // Convert to boolean
           screenshotCount: conversionData.screenshotCount || 3, // Pass the desired screenshot count
+          writingStyle: conversionData.writingStyle || {}, // Pass writing style options
+          customInstructions: conversionData.customInstructions || '', // Pass custom instructions
         }),
       });
 

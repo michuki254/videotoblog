@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { YoutubeTranscript } from 'youtube-transcript';
 import { PromptService } from '../../services/promptService';
+import { auth } from '@clerk/nextjs/server';
+import connectToDatabase from '../../../lib/mongodb';
+import User from '../../../models/User';
+import BlogPost from '../../../models/BlogPost';
 
 // Add proper interfaces
 interface Screenshot {
@@ -44,8 +48,19 @@ const openai = new OpenAI({
 
 export async function POST(req: Request) {
   try {
+    // Check authentication
+    const { userId } = await auth();
+    
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized. Please sign in to convert videos.' },
+        { status: 401 }
+      );
+    }
+
     const { 
       url, 
+      primaryKeyphrase = '',
       screenshots = [], 
       seo, 
       headlines, 
@@ -54,11 +69,39 @@ export async function POST(req: Request) {
       wordCount = 2000,
       includeFeaturedImage = true,
       includeScreenshots = true,
-      writingStyle = 'default',
+      writingStyle = {},
+      customInstructions = '',
       screenshotCount = 3
     } = await req.json();
 
-    console.log('Starting conversion for URL:', url);
+    // Extract writing style options with defaults
+    const {
+      tone = 'auto',
+      pointOfView = 'auto',
+      useEmojis = false,
+      format = 'auto',
+      useChaptersAsOutline = false,
+      addTableOfContents = tableOfContents,
+      addFAQs = false,
+      addVideoAttribution = false,
+      addCTA = false
+    } = writingStyle;
+
+    console.log('Starting conversion for URL:', url, 'User:', userId);
+    console.log('Writing Style Options:', writingStyle);
+
+    // Connect to database
+    await connectToDatabase();
+
+    // Get or create user in database
+    let user = await User.findOne({ clerkId: userId });
+    if (!user) {
+      // Create user if doesn't exist (will be updated with full details later)
+      user = await User.create({
+        clerkId: userId,
+        email: `user-${userId}@temp.com`, // Temporary email, will be updated
+      });
+    }
 
     // Extract video ID for metadata
     const videoId = extractVideoId(url);
@@ -71,6 +114,26 @@ export async function POST(req: Request) {
     }
 
     console.log('Video ID extracted:', videoId);
+
+    // Check if this video has already been converted by this user
+    const existingBlogPost = await BlogPost.findOne({ 
+      clerkId: userId, 
+      videoId: videoId 
+    });
+
+    if (existingBlogPost) {
+      console.log('Returning existing blog post for video:', videoId);
+      return NextResponse.json({
+        blogPost: existingBlogPost.content,
+        title: existingBlogPost.title,
+        thumbnail: existingBlogPost.thumbnail || '',
+        screenshotPlacements: [],
+        intelligentTimestamps: [],
+        contentAnalysis: existingBlogPost.contentAnalysis,
+        existingPost: true,
+        postId: existingBlogPost._id,
+      });
+    }
 
     // Get video metadata
     let videoMetadata: VideoMetadata;
@@ -85,7 +148,7 @@ export async function POST(req: Request) {
     // Get video transcript
     let transcriptText = '';
     try {
-      const transcript = await YoutubeTranscript.fetchTranscript(url);
+    const transcript = await YoutubeTranscript.fetchTranscript(url);
       transcriptText = transcript.map((item) => item.text).join(' ');
       console.log('Transcript fetched, length:', transcriptText.length);
       
@@ -187,41 +250,105 @@ export async function POST(req: Request) {
     // Create simple screenshot placements
     if (finalScreenshots.length > 0) {
       screenshotPlacements = finalScreenshots.map((screenshot: Screenshot, index: number) => ({
-        timestamp: screenshot.timestamp,
-        url: screenshot.url,
+          timestamp: screenshot.timestamp,
+          url: screenshot.url,
         section: index === 0 ? "Introduction" : index === finalScreenshots.length - 1 ? "Conclusion" : "Main Content",
         caption: `Screenshot from the video at ${screenshot.timestamp} seconds`,
         reasoning: "Visual reference to support the content",
         context: "Illustrates key points discussed in this section"
-      }));
-    }
+        }));
+      }
 
-    // Step 3: Generate blog post (simplified prompt)
+    // Step 3: Generate blog post (enhanced with writing style)
     console.log('Starting blog generation...');
     
-    const simplifiedPrompt = `
+    // Build dynamic writing style instructions
+    let styleInstructions = '';
+    
+    if (tone !== 'auto') {
+      styleInstructions += `\n- Use a ${tone} tone throughout the content`;
+    }
+    
+    if (pointOfView !== 'auto') {
+      const povMap: { [key: string]: string } = {
+        'first-person': 'first person (I, we)',
+        'second-person': 'second person (you)',
+        'third-person': 'third person (they, it)'
+      };
+      styleInstructions += `\n- Write in ${povMap[pointOfView] || pointOfView}`;
+    }
+    
+    if (useEmojis) {
+      styleInstructions += `\n- Include relevant emojis to make the content more engaging`;
+    }
+    
+    if (format !== 'auto') {
+      const formatMap: { [key: string]: string } = {
+        'article': 'an informative article format',
+        'tutorial': 'a step-by-step tutorial format',
+        'listicle': 'a listicle format with numbered or bulleted points',
+        'guide': 'a comprehensive guide format',
+        'review': 'a review format with pros/cons',
+        'how-to': 'a how-to format with clear instructions'
+      };
+      styleInstructions += `\n- Structure the content as ${formatMap[format] || format}`;
+    }
+    
+    if (useChaptersAsOutline) {
+      styleInstructions += `\n- Use the video's natural chapters/sections as the blog outline`;
+    }
+    
+    // Build content sections to include
+    let additionalSections = '';
+    
+    if (addFAQs) {
+      additionalSections += `\n- Include a comprehensive FAQ section at the end addressing common questions about the topic`;
+    }
+    
+    if (addVideoAttribution) {
+      additionalSections += `\n- Add a "Video Source" or "Original Video" section crediting the original video`;
+    }
+    
+    if (addCTA) {
+      additionalSections += `\n- Include a compelling call-to-action (CTA) at the end encouraging reader engagement`;
+    }
+
+    const enhancedPrompt = `
       Create a comprehensive blog post based on this video content:
       
       Video Title: ${videoMetadata.title || 'Educational Video Content'}
       Content Type: ${contentAnalysis.contentType}
+      ${primaryKeyphrase ? `Primary Keyphrase (IMPORTANT - Use this strategically throughout the content): "${primaryKeyphrase}"` : ''}
       Transcript: ${cleanedTranscript}
+      
+      ${customInstructions ? `
+      CUSTOM INSTRUCTIONS (PRIORITY - Follow these specific requirements):
+      ${customInstructions}
+      ` : ''}
       
       ${finalScreenshots.length > 0 ? `
       Include these screenshots in your blog post:
       ${screenshotPlacements.map(p => `![${p.caption}](${p.url})`).join('\n')}
       ` : ''}
       
-      Create a ${wordCount}-word blog post that:
-      1. Has a clear, engaging title
-      2. Uses proper markdown formatting (# ## ###)
-      ${tableOfContents ? '3. Includes a Table of Contents with clickable links to sections' : '3. Does NOT include a Table of Contents'}
-      4. Provides valuable insights and information
-      5. Is well-structured and easy to read
-      6. Includes practical takeaways
-      ${seo ? '7. Is SEO optimized with relevant keywords' : ''}
-      ${headlines ? '8. Uses engaging headlines and subheadings' : ''}
+      WRITING STYLE REQUIREMENTS:${styleInstructions || '\n- Use a natural, engaging writing style'}
       
-      ${tableOfContents ? `
+      CONTENT REQUIREMENTS:
+      - Create a ${wordCount}-word blog post
+      - Use a clear, engaging title${primaryKeyphrase ? ` (include "${primaryKeyphrase}" in the title if relevant)` : ''}
+      - Use proper markdown formatting (# ## ###)
+      ${addTableOfContents ? '- Include a Table of Contents with clickable links to sections' : '- Do NOT include a Table of Contents'}
+      - Provide valuable insights and information
+      - Be well-structured and easy to read
+      - Include practical takeaways
+      ${seo ? `- SEO optimize with relevant keywords${primaryKeyphrase ? ` (especially focus on "${primaryKeyphrase}")` : ''}` : ''}
+      ${headlines ? '- Use engaging headlines and subheadings' : ''}
+      ${primaryKeyphrase ? `- Naturally incorporate the primary keyphrase "${primaryKeyphrase}" throughout the content for SEO (aim for 1-3% density)` : ''}
+      ${primaryKeyphrase ? `- Ensure the keyphrase appears in the introduction, at least one subheading, and conclusion` : ''}
+      
+      ADDITIONAL SECTIONS:${additionalSections || '\n- Focus on the main content without additional sections'}
+      
+      ${addTableOfContents ? `
       FORMAT: Start with the title, then add a "## Table of Contents" section with links like:
       - [Introduction](#introduction)
       - [Key Points](#key-points)
@@ -230,22 +357,25 @@ export async function POST(req: Request) {
       Then write the full blog post with matching section headers.
       ` : 'FORMAT: Start with the title, then write the full blog post with clear section headers (but no table of contents).'}
       
+      ${primaryKeyphrase ? `SEO FOCUS: Remember to strategically use "${primaryKeyphrase}" throughout the content while maintaining natural readability.` : ''}
+      
       Write ONLY clean, readable content in English. Use proper markdown formatting.
+      ${useEmojis ? 'Feel free to use emojis where appropriate to enhance engagement.' : ''}
     `;
 
     const completion = await openai.chat.completions.create({
       messages: [
         {
           role: "system",
-          content: "You are an expert blog writer. Create high-quality, engaging content based on video transcripts. Always use proper markdown formatting and write in clear, professional English."
+          content: `You are an expert blog writer. Create high-quality, engaging content based on video transcripts. Always use proper markdown formatting and write in clear, professional English. ${styleInstructions ? `Follow these style guidelines: ${styleInstructions}` : ''}`
         },
         {
           role: "user",
-          content: simplifiedPrompt
+          content: enhancedPrompt
         }
       ],
       model: "gpt-4.1",
-      temperature: 0.7,
+      temperature: tone === 'formal' ? 0.3 : tone === 'enthusiastic' ? 0.8 : 0.7,
       max_tokens: Math.min(wordCount * 2, 4000),
     });
 
@@ -255,6 +385,39 @@ export async function POST(req: Request) {
     if (!blogContent || blogContent.length < 200) {
       throw new Error('Generated content too short or empty');
     }
+
+    // Calculate word count
+    const actualWordCount = blogContent.trim().split(/\s+/).length;
+
+    // Save blog post to database
+    const blogPost = await BlogPost.create({
+      userId: user._id,
+      clerkId: userId,
+      title: videoMetadata.title || 'Generated Blog Post',
+      content: blogContent,
+      videoUrl: url,
+      videoId: videoId,
+      thumbnail: videoMetadata.thumbnail || '',
+      primaryKeyphrase: primaryKeyphrase || undefined,
+      wordCount: actualWordCount,
+      contentType: contentAnalysis.contentType,
+      status: 'draft',
+      seoOptimized: !!seo,
+      hasScreenshots: includeScreenshots && finalScreenshots.length > 0,
+      screenshotCount: finalScreenshots.length,
+      hasTableOfContents: !!tableOfContents,
+      detailLevel: detailLevel,
+      contentAnalysis: {
+        contentType: contentAnalysis.contentType,
+        confidence: contentAnalysis.confidence,
+        reasoning: contentAnalysis.reasoning,
+        targetAudience: contentAnalysis.targetAudience,
+        keyTopics: contentAnalysis.keyTopics,
+        suggestedTone: contentAnalysis.suggestedStructure.tone
+      },
+    });
+
+    console.log('Blog post saved to database with ID:', blogPost._id);
 
     return NextResponse.json({
       blogPost: blogContent,
@@ -269,7 +432,9 @@ export async function POST(req: Request) {
         targetAudience: contentAnalysis.targetAudience,
         keyTopics: contentAnalysis.keyTopics,
         suggestedTone: contentAnalysis.suggestedStructure.tone
-      }
+      },
+      postId: blogPost._id,
+      saved: true,
     });
 
   } catch (error: unknown) {
@@ -280,7 +445,7 @@ export async function POST(req: Request) {
       error: 'Conversion failed',
       details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
-  }
+    }
 }
 
 // Helper function for simple timestamp generation

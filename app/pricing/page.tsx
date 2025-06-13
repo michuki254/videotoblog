@@ -4,80 +4,93 @@ import { CheckIcon, XMarkIcon } from '@heroicons/react/20/solid'
 import { useState } from 'react'
 import Navigation from '../components/Navigation'
 import Link from 'next/link'
+import { useUser } from '@clerk/nextjs'
+import { useRouter } from 'next/navigation'
+import toast from 'react-hot-toast'
 
 const tiers = [
   {
     name: 'Free',
     id: 'tier-free',
+    planKey: 'FREE',
     href: '/convert',
     price: 0,
     description: 'Perfect for trying out our AI-powered conversion.',
     features: [
-      '3 video conversions per month',
-      'Up to 10 minutes per video',
-      'Basic AI conversion',
-      'Screenshot capture',
-      'SEO optimization',
-      'Export to markdown',
+      '2 video conversions per month',
+      'Up to 5 minutes per video',
+      'Basic blog post generation',
+      'Standard templates',
       'Community support',
     ],
     limitations: [
-      'No priority processing',
-      'Standard templates only',
-      'Watermarked downloads',
+      'No Pinterest posts',
+      'No platform integrations',
+      'Limited storage (1GB)',
     ],
     featured: false,
     cta: 'Start Free',
     popular: false,
   },
   {
-    name: 'Professional',
-    id: 'tier-professional',
+    name: 'Basic',
+    id: 'tier-basic',
+    planKey: 'BASIC',
     href: '#',
-    price: 29,
-    description: 'Ideal for content creators and growing businesses.',
+    price: 9.99,
+    description: 'Great for individual content creators.',
     features: [
-      '50 video conversions per month',
-      'Up to 3 hours per video',
-      'Advanced AI with GPT-4',
-      'Smart screenshot capture',
-      'Advanced SEO optimization',
-      'Multiple export formats',
-      'Custom templates',
-      'Tone & style adjustment',
-      'Priority processing',
+      '20 video conversions per month',
+      'Up to 30 minutes per video',
+      'AI-powered blog generation',
+      'Pinterest post creation',
+      'WordPress integration',
       'Email support',
+      '10GB storage',
+    ],
+    limitations: [],
+    featured: false,
+    cta: 'Start Basic',
+    popular: false,
+  },
+  {
+    name: 'Pro',
+    id: 'tier-pro',
+    planKey: 'PRO',
+    href: '#',
+    price: 29.99,
+    description: 'Ideal for growing businesses and teams.',
+    features: [
+      '100 video conversions per month',
+      'Up to 2 hours per video',
+      'Advanced AI features',
+      'All platform integrations',
+      'Custom templates',
+      'Priority support',
       'Analytics dashboard',
-      'Bulk operations',
+      '50GB storage',
     ],
     limitations: [],
     featured: true,
-    cta: 'Start Professional',
+    cta: 'Start Pro',
     popular: true,
   },
   {
     name: 'Enterprise',
     id: 'tier-enterprise',
+    planKey: 'ENTERPRISE',
     href: '#',
-    price: 99,
-    description: 'Dedicated solution for teams and large-scale operations.',
+    price: 99.99,
+    description: 'Dedicated solution for large-scale operations.',
     features: [
       'Unlimited video conversions',
       'Unlimited video duration',
-      'Premium AI models',
-      'Custom AI training',
-      'Advanced screenshot AI',
-      'Enterprise SEO tools',
-      'All export formats',
-      'Custom branding',
-      'API access (10,000 calls/month)',
+      'Custom AI model training',
       'White-label solution',
-      'Dedicated account manager',
-      '24/7 priority support',
+      'API access',
+      'Dedicated support',
       'Custom integrations',
-      'Team collaboration tools',
-      'Advanced analytics',
-      'SLA guarantee (99.9% uptime)',
+      '500GB storage',
     ],
     limitations: [],
     featured: false,
@@ -178,6 +191,9 @@ function classNames(...classes: string[]) {
 
 export default function PricingPage() {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly')
+  const [isLoading, setIsLoading] = useState<string | null>(null)
+  const { user, isSignedIn } = useUser()
+  const router = useRouter()
 
   const getPrice = (basePrice: number) => {
     if (basePrice === 0) return 0
@@ -187,6 +203,54 @@ export default function PricingPage() {
   const getSavings = (basePrice: number) => {
     if (basePrice === 0) return 0
     return Math.round(basePrice * 0.2 * 12)
+  }
+
+  const handleSubscribe = async (planKey: string) => {
+    if (!isSignedIn) {
+      router.push('/sign-up')
+      return
+    }
+
+    if (planKey === 'FREE') {
+      router.push('/dashboard')
+      return
+    }
+
+    if (planKey === 'ENTERPRISE') {
+      // Redirect to contact sales
+      window.open('mailto:sales@videotoblog.ai?subject=Enterprise Plan Inquiry', '_blank')
+      return
+    }
+
+    setIsLoading(planKey)
+
+    try {
+      const response = await fetch('/api/subscriptions/create-checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          plan: planKey,
+          email: user?.emailAddresses[0]?.emailAddress,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create checkout')
+      }
+
+      // Redirect to LemonSqueezy checkout
+      window.location.href = data.checkoutUrl
+
+    } catch (error) {
+      console.error('Subscription error:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to start subscription')
+    } finally {
+      setIsLoading(null)
+    }
   }
 
   return (
@@ -288,19 +352,27 @@ export default function PricingPage() {
                   </p>
                 )}
 
-                <Link
-                  href={tier.href}
+                <button
+                  onClick={() => handleSubscribe(tier.planKey)}
+                  disabled={isLoading === tier.planKey}
                   className={classNames(
                     tier.featured
-                      ? 'bg-indigo-600 text-white shadow-sm hover:bg-indigo-500'
+                      ? 'bg-indigo-600 text-white shadow-sm hover:bg-indigo-500 disabled:bg-indigo-400'
                       : tier.price === 0
-                      ? 'bg-gray-50 text-gray-900 ring-1 ring-inset ring-gray-200 hover:ring-gray-300'
-                      : 'text-indigo-600 ring-1 ring-inset ring-indigo-200 hover:ring-indigo-300',
-                    'mt-6 block rounded-md py-3 px-6 text-center text-sm font-semibold leading-6 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-all'
+                      ? 'bg-gray-50 text-gray-900 ring-1 ring-inset ring-gray-200 hover:ring-gray-300 disabled:bg-gray-200'
+                      : 'text-indigo-600 ring-1 ring-inset ring-indigo-200 hover:ring-indigo-300 disabled:text-indigo-400',
+                    'mt-6 w-full rounded-md py-3 px-6 text-center text-sm font-semibold leading-6 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-all disabled:cursor-not-allowed'
                   )}
                 >
-                  {tier.cta}
-                </Link>
+                  {isLoading === tier.planKey ? (
+                    <div className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                      Loading...
+                    </div>
+                  ) : (
+                    tier.cta
+                  )}
+                </button>
 
                 <ul role="list" className="mt-8 space-y-3 text-sm leading-6 text-gray-600 xl:mt-10">
                   {tier.features.map((feature) => (
