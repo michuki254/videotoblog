@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
         : 'Webhook secret is missing - this is why signature verification fails'
     })
 
-  } catch (error) {
+  } catch (error: any) {
     return NextResponse.json(
       { error: 'Internal server error', details: error.message },
       { status: 500 }
