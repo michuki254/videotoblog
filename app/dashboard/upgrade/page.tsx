@@ -123,19 +123,11 @@ export default function DashboardUpgradePage() {
   const handleUpgrade = async (planId: string) => {
     if (!user?.emailAddresses?.[0]?.emailAddress) return
 
-    // Check if user already has an active subscription
+    // Double-check: if user has active subscription, don't proceed
     if (currentSubscription && 
         (currentSubscription.status === 'active' || currentSubscription.status === 'on_trial') &&
         currentSubscription.plan !== 'FREE') {
-      
-      // If trying to subscribe to the same plan, show message
-      if (currentSubscription.plan === planId) {
-        alert('You are already subscribed to this plan.')
-        return
-      }
-      
-      // For plan changes, redirect to customer portal or show change plan message
-      alert('You already have an active subscription. Please contact support to change your plan or cancel your current subscription first.')
+      alert('You already have an active subscription.')
       return
     }
 
@@ -253,6 +245,17 @@ export default function DashboardUpgradePage() {
                     </div>
                   )}
                 </div>
+                
+                {/* Notice for active subscribers */}
+                {currentSubscription && 
+                 (currentSubscription.status === 'active' || currentSubscription.status === 'on_trial') &&
+                 currentSubscription.plan !== 'FREE' && (
+                  <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm text-blue-800">
+                      <strong>Note:</strong> You have an active subscription. To change plans, please contact support or cancel your current subscription first.
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
@@ -260,6 +263,9 @@ export default function DashboardUpgradePage() {
             <div className="grid lg:grid-cols-4 md:grid-cols-2 gap-6">
               {plans.map((plan) => {
                 const isCurrentPlan = currentSubscription?.plan === plan.id
+                const hasActiveSubscription = currentSubscription && 
+                  (currentSubscription.status === 'active' || currentSubscription.status === 'on_trial') &&
+                  currentSubscription.plan !== 'FREE'
                 const isDowngrade = currentSubscription?.plan === 'ENTERPRISE' && plan.id !== 'ENTERPRISE' ||
                                    currentSubscription?.plan === 'PRO' && plan.id === 'BASIC' ||
                                    currentSubscription?.plan === 'PRO' && plan.id === 'FREE' ||
@@ -308,6 +314,13 @@ export default function DashboardUpgradePage() {
                         <div className="w-full bg-gray-100 text-gray-500 py-2 px-4 rounded-md text-center font-medium text-sm">
                           Current Plan
                         </div>
+                      ) : hasActiveSubscription && plan.id !== 'FREE' ? (
+                        <button
+                          disabled={true}
+                          className="w-full py-2 px-4 rounded-md font-medium text-sm bg-gray-200 text-gray-400 cursor-not-allowed"
+                        >
+                          Already Subscribed
+                        </button>
                       ) : (
                         <button
                           onClick={() => handleUpgrade(plan.id)}
