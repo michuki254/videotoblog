@@ -54,4 +54,5 @@ async function connectToDatabase() {
   return cached.conn
 }
 
-export default connectToDatabase 
+export default connectToDatabase
+export { connectToDatabase as connectDB } 
