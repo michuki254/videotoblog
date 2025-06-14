@@ -65,6 +65,16 @@ const SubscriptionSchema = new mongoose.Schema({
     type: UsageSchema,
     default: () => ({}),
   },
+  limits: {
+    videosPerMonth: {
+      type: Number,
+      default: 2,
+    },
+    storageGB: {
+      type: Number,
+      default: 1,
+    },
+  },
   webhookData: {
     type: mongoose.Schema.Types.Mixed,
     default: {},
@@ -74,7 +84,7 @@ const SubscriptionSchema = new mongoose.Schema({
 })
 
 // Indexes for better performance
-SubscriptionSchema.index({ userId: 1 })
+// Note: userId index is automatically created by unique: true
 SubscriptionSchema.index({ customerId: 1 })
 SubscriptionSchema.index({ subscriptionId: 1 })
 SubscriptionSchema.index({ status: 1 })
@@ -136,6 +146,10 @@ export interface ISubscription {
     videosThisMonth: number
     storageUsedGB: number
     lastResetDate: Date
+  }
+  limits: {
+    videosPerMonth: number
+    storageGB: number
   }
   webhookData: any
   resetMonthlyUsage(): Promise<any>
