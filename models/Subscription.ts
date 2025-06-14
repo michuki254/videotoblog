@@ -152,6 +152,8 @@ export interface ISubscription {
     storageGB: number
   }
   webhookData: any
+  createdAt?: Date
+  updatedAt?: Date
   resetMonthlyUsage(): Promise<any>
   incrementVideoUsage(): Promise<any>
   updateStorageUsage(sizeGB: number): Promise<any>
