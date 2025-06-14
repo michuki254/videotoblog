@@ -22,25 +22,31 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       debug: true,
       currentUser: userId,
-      userSubscriptions: userSubscriptions.map(sub => ({
-        id: sub._id,
-        userId: sub.userId,
-        email: sub.email,
-        plan: sub.plan,
-        status: sub.status,
-        subscriptionId: sub.subscriptionId,
-        createdAt: sub.createdAt,
-        currentPeriodEnd: sub.currentPeriodEnd
-      })),
+      userSubscriptions: userSubscriptions.map(sub => {
+        const subDoc = sub.toObject()
+        return {
+          id: sub._id,
+          userId: sub.userId,
+          email: sub.email,
+          plan: sub.plan,
+          status: sub.status,
+          subscriptionId: sub.subscriptionId,
+          createdAt: subDoc.createdAt,
+          currentPeriodEnd: sub.currentPeriodEnd
+        }
+      }),
       totalUserSubscriptions: userSubscriptions.length,
-      recentSubscriptions: allSubscriptions.map(sub => ({
-        id: sub._id,
-        userId: sub.userId,
-        email: sub.email,
-        plan: sub.plan,
-        status: sub.status,
-        createdAt: sub.createdAt
-      })),
+      recentSubscriptions: allSubscriptions.map(sub => {
+        const subDoc = sub.toObject()
+        return {
+          id: sub._id,
+          userId: sub.userId,
+          email: sub.email,
+          plan: sub.plan,
+          status: sub.status,
+          createdAt: subDoc.createdAt
+        }
+      }),
       totalSubscriptions: await Subscription.countDocuments(),
       message: userSubscriptions.length === 0 
         ? 'No subscriptions found for your user ID. This means the webhook is not working or the purchase was not linked to your account.'
