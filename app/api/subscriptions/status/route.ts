@@ -1,20 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
+import { connectDB } from '@/lib/mongodb'
 import Subscription from '@/models/Subscription'
-import { SUBSCRIPTION_PLANS, getUserPlan, hasActiveSubscription } from '@/lib/lemonsqueezy'
-import mongoose from 'mongoose'
-
-// Connect to MongoDB
-async function connectDB() {
-  if (mongoose.connections[0].readyState) {
-    return
-  }
-  try {
-    await mongoose.connect(process.env.MONGODB_URI!)
-  } catch (error) {
-    console.error('MongoDB connection error:', error)
-  }
-}
 
 export async function GET(request: NextRequest) {
   try {
@@ -25,51 +12,59 @@ export async function GET(request: NextRequest) {
     }
 
     await connectDB()
-
-    // Get user subscription
-    const subscription = await Subscription.findByUserId(userId)
+    
+    // Get user's subscription from database
+    const subscription = await Subscription.findOne({ userId }).sort({ createdAt: -1 })
     
     if (!subscription) {
-      // User has no subscription - return free plan
       return NextResponse.json({
+        hasSubscription: false,
         plan: 'FREE',
-        status: 'free',
-        isActive: true,
-        features: SUBSCRIPTION_PLANS.FREE.features,
-        limits: SUBSCRIPTION_PLANS.FREE.limits,
+        status: 'inactive',
         usage: {
           videosThisMonth: 0,
+          videosLimit: 2,
           storageUsedGB: 0,
-        },
-        currentPeriodEnd: null,
-        cancelAtPeriodEnd: false,
+          storageLimit: 1
+        }
       })
     }
 
-    // Reset monthly usage if needed
-    await subscription.resetMonthlyUsage()
-
-    const plan = getUserPlan(subscription)
-    const isActive = hasActiveSubscription(subscription)
-    const planData = SUBSCRIPTION_PLANS[plan]
+    // Calculate usage for current month
+    const currentMonth = new Date().getMonth()
+    const currentYear = new Date().getFullYear()
+    const monthStart = new Date(currentYear, currentMonth, 1)
+    
+    // You can extend this to get actual usage from your posts/conversions
+    const usage = {
+      videosThisMonth: subscription.usage?.videosThisMonth || 0,
+      videosLimit: subscription.limits?.videosPerMonth || 0,
+      storageUsedGB: subscription.usage?.storageUsedGB || 0,
+      storageLimit: subscription.limits?.storageGB || 0
+    }
 
     return NextResponse.json({
-      plan,
+      hasSubscription: true,
+      plan: subscription.plan,
       status: subscription.status,
-      isActive,
-      features: planData.features,
-      limits: planData.limits,
-      usage: {
-        videosThisMonth: subscription.usage.videosThisMonth,
-        storageUsedGB: subscription.usage.storageUsedGB,
-      },
+      subscriptionId: subscription.subscriptionId,
+      customerId: subscription.customerId,
+      currentPeriodStart: subscription.currentPeriodStart,
       currentPeriodEnd: subscription.currentPeriodEnd,
       cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
-      subscriptionId: subscription.subscriptionId,
+      usage,
+      billingInfo: {
+        nextBillingDate: subscription.currentPeriodEnd,
+        amount: subscription.plan === 'BASIC' ? 9.99 : 
+                subscription.plan === 'PRO' ? 29.99 : 
+                subscription.plan === 'ENTERPRISE' ? 99.99 : 0,
+        currency: 'USD',
+        interval: 'month'
+      }
     })
 
   } catch (error) {
-    console.error('Get subscription status error:', error)
+    console.error('Error fetching subscription status:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

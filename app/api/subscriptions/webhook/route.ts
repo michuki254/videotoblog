@@ -1,19 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyWebhookSignature, getUserPlan } from '@/lib/lemonsqueezy'
+import { connectDB } from '@/lib/mongodb'
 import Subscription from '@/models/Subscription'
-import mongoose from 'mongoose'
-
-// Connect to MongoDB
-async function connectDB() {
-  if (mongoose.connections[0].readyState) {
-    return
-  }
-  try {
-    await mongoose.connect(process.env.MONGODB_URI!)
-  } catch (error) {
-    console.error('MongoDB connection error:', error)
-  }
-}
 
 export async function POST(request: NextRequest) {
   try {
