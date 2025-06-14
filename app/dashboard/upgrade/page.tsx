@@ -123,6 +123,22 @@ export default function DashboardUpgradePage() {
   const handleUpgrade = async (planId: string) => {
     if (!user?.emailAddresses?.[0]?.emailAddress) return
 
+    // Check if user already has an active subscription
+    if (currentSubscription && 
+        (currentSubscription.status === 'active' || currentSubscription.status === 'on_trial') &&
+        currentSubscription.plan !== 'FREE') {
+      
+      // If trying to subscribe to the same plan, show message
+      if (currentSubscription.plan === planId) {
+        alert('You are already subscribed to this plan.')
+        return
+      }
+      
+      // For plan changes, redirect to customer portal or show change plan message
+      alert('You already have an active subscription. Please contact support to change your plan or cancel your current subscription first.')
+      return
+    }
+
     if (planId === 'FREE') {
       return // Already on free plan
     }
@@ -164,8 +180,8 @@ export default function DashboardUpgradePage() {
     return (
       <div className="flex h-screen bg-gray-50">
         <DashboardSidebar 
-          isOpen={isSidebarOpen} 
-          setIsOpen={setIsSidebarOpen}
+          isSidebarOpen={isSidebarOpen} 
+          setIsSidebarOpen={setIsSidebarOpen}
         />
         <div className="flex-1 flex items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -182,8 +198,8 @@ export default function DashboardUpgradePage() {
   return (
     <div className="flex h-screen bg-gray-50">
       <DashboardSidebar 
-        isOpen={isSidebarOpen} 
-        setIsOpen={setIsSidebarOpen}
+        isSidebarOpen={isSidebarOpen} 
+        setIsSidebarOpen={setIsSidebarOpen}
       />
       
       <div className="flex-1 flex flex-col overflow-hidden">
