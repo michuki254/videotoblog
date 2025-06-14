@@ -12,6 +12,9 @@ export async function POST(request: NextRequest) {
     
     // Verify webhook signature
     if (!verifyWebhookSignature(body, signature, process.env.LEMONSQUEEZY_WEBHOOK_SECRET!)) {
+      console.log('Webhook signature verification failed')
+      console.log('Signature received:', signature ? 'Present' : 'Missing')
+      console.log('Secret configured:', process.env.LEMONSQUEEZY_WEBHOOK_SECRET ? 'Yes' : 'No')
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
     }
 
