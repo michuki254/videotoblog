@@ -69,51 +69,95 @@ export async function POST(request: NextRequest) {
 }
 
 async function handleSubscriptionCreated(subscriptionData: any, event: any) {
-  const customData = subscriptionData.attributes.custom_data
-  const userId = customData?.userId
+  try {
+    // Custom data is in event.meta.custom_data, not subscriptionData.attributes.custom_data
+    const customData = event.meta?.custom_data
+    const userId = customData?.user_id // Note: it's user_id, not userId
 
-  if (!userId) {
-    console.error('No userId found in subscription data')
-    return
+    console.log('Processing subscription_created for:', {
+      subscriptionId: subscriptionData.id,
+      userId,
+      email: subscriptionData.attributes.user_email,
+      customData
+    })
+
+    if (!userId) {
+      console.error('No userId found in custom_data:', customData)
+      return
+    }
+
+    const subscriptionRecord = {
+      userId,
+      email: subscriptionData.attributes.user_email,
+      customerId: subscriptionData.attributes.customer_id.toString(),
+      subscriptionId: subscriptionData.id,
+      variantId: subscriptionData.attributes.variant_id.toString(),
+      status: subscriptionData.attributes.status,
+      // Use the correct date field names from the webhook
+      currentPeriodStart: new Date(subscriptionData.attributes.created_at),
+      currentPeriodEnd: new Date(subscriptionData.attributes.renews_at || subscriptionData.attributes.trial_ends_at),
+      cancelAtPeriodEnd: subscriptionData.attributes.cancelled,
+      plan: customData?.plan || getUserPlan(subscriptionData),
+      limits: {
+        videosPerMonth: customData?.plan === 'BASIC' ? 20 : 
+                       customData?.plan === 'PRO' ? 100 : 
+                       customData?.plan === 'ENTERPRISE' ? -1 : 2,
+        storageGB: customData?.plan === 'BASIC' ? 10 : 
+                  customData?.plan === 'PRO' ? 50 : 
+                  customData?.plan === 'ENTERPRISE' ? 500 : 1
+      },
+      usage: {
+        videosThisMonth: 0,
+        storageUsedGB: 0,
+        lastResetDate: new Date()
+      },
+      webhookData: event,
+    }
+
+    await Subscription.createOrUpdate(subscriptionRecord)
+    console.log('Subscription created successfully for user:', userId)
+  } catch (error) {
+    console.error('Error in handleSubscriptionCreated:', error)
+    throw error
   }
-
-  const subscriptionRecord = {
-    userId,
-    email: subscriptionData.attributes.user_email,
-    customerId: subscriptionData.attributes.customer_id.toString(),
-    subscriptionId: subscriptionData.id,
-    variantId: subscriptionData.attributes.variant_id.toString(),
-    status: subscriptionData.attributes.status,
-    currentPeriodStart: new Date(subscriptionData.attributes.current_period_start),
-    currentPeriodEnd: new Date(subscriptionData.attributes.current_period_end),
-    cancelAtPeriodEnd: subscriptionData.attributes.cancelled,
-    plan: getUserPlan(subscriptionData),
-    webhookData: event,
-  }
-
-  await Subscription.createOrUpdate(subscriptionRecord)
-  console.log('Subscription created for user:', userId)
 }
 
 async function handleSubscriptionUpdated(subscriptionData: any, event: any) {
-  const subscriptionId = subscriptionData.id
+  try {
+    const subscriptionId = subscriptionData.id
+    const customData = event.meta?.custom_data
 
-  const updateData = {
-    variantId: subscriptionData.attributes.variant_id.toString(),
-    status: subscriptionData.attributes.status,
-    currentPeriodStart: new Date(subscriptionData.attributes.current_period_start),
-    currentPeriodEnd: new Date(subscriptionData.attributes.current_period_end),
-    cancelAtPeriodEnd: subscriptionData.attributes.cancelled,
-    plan: getUserPlan(subscriptionData),
-    webhookData: event,
+    console.log('Processing subscription_updated for:', {
+      subscriptionId,
+      status: subscriptionData.attributes.status,
+      customData
+    })
+
+    const updateData = {
+      variantId: subscriptionData.attributes.variant_id.toString(),
+      status: subscriptionData.attributes.status,
+      currentPeriodStart: new Date(subscriptionData.attributes.created_at),
+      currentPeriodEnd: new Date(subscriptionData.attributes.renews_at || subscriptionData.attributes.trial_ends_at),
+      cancelAtPeriodEnd: subscriptionData.attributes.cancelled,
+      plan: customData?.plan || getUserPlan(subscriptionData),
+      webhookData: event,
+    }
+
+    const result = await Subscription.findOneAndUpdate(
+      { subscriptionId },
+      updateData,
+      { new: true }
+    )
+    
+    if (result) {
+      console.log('Subscription updated successfully:', subscriptionId)
+    } else {
+      console.log('No subscription found to update for ID:', subscriptionId)
+    }
+  } catch (error) {
+    console.error('Error in handleSubscriptionUpdated:', error)
+    throw error
   }
-
-  await Subscription.findOneAndUpdate(
-    { subscriptionId },
-    updateData,
-    { new: true }
-  )
-  console.log('Subscription updated:', subscriptionId)
 }
 
 async function handleSubscriptionCancelled(subscriptionData: any, event: any) {
