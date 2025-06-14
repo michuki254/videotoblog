@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Navigation from '../components/Navigation'
 import {
   CurrencyDollarIcon,
   UsersIcon,
@@ -13,8 +14,10 @@ import {
 export default function AffiliatePage() {
   return (
     <div className="min-h-screen bg-gray-50">
+      <Navigation />
+      
       {/* Hero Section */}
-      <div className="bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600">
+      <div className="bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 pt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
           <div className="text-center">
             <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
@@ -25,7 +28,7 @@ export default function AffiliatePage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a
-                href="https://app.lemonsqueezy.com/affiliates"
+                href="https://hullmedia.lemonsqueezy.com/affiliates"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="bg-white text-blue-600 px-8 py-4 rounded-lg font-semibold hover:bg-gray-100 transition-colors inline-flex items-center justify-center"
@@ -171,7 +174,7 @@ export default function AffiliatePage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
-              href="https://app.lemonsqueezy.com/affiliates"
+              href="https://hullmedia.lemonsqueezy.com/affiliates"
               target="_blank"
               rel="noopener noreferrer"
               className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors inline-flex items-center justify-center"
