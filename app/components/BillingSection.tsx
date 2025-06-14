@@ -33,7 +33,7 @@ export default function BillingSection() {
   }
 
   const handleUpgrade = () => {
-    window.location.href = '/upgrade'
+    window.location.href = '/dashboard?view=upgrade'
   }
 
   if (loading) {

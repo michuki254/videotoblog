@@ -45,7 +45,7 @@ export default function DashboardSidebar({ isSidebarOpen, setIsSidebarOpen, user
   ]
 
   const secondaryNavigation = [
-    { name: 'Upgrade', href: '/upgrade', icon: SparklesIcon },
+    { name: 'Upgrade', href: '/dashboard?view=upgrade', icon: SparklesIcon },
     { name: 'Settings', href: '/settings', icon: CogIcon },
     { name: 'Account', href: '/account', icon: UserIcon },
   ]
@@ -142,7 +142,7 @@ export default function DashboardSidebar({ isSidebarOpen, setIsSidebarOpen, user
           <div className="flex-shrink-0 border-t border-slate-700/50 p-4">
             <nav className="space-y-2">
               {secondaryNavigation.map((item) => {
-                const isActive = pathname === item.href
+                const isActive = pathname === item.href || (item.name === 'Upgrade' && pathname === '/dashboard' && typeof window !== 'undefined' && window.location.search.includes('view=upgrade'))
                 return (
               <Link
                     key={item.name}
@@ -298,7 +298,7 @@ export default function DashboardSidebar({ isSidebarOpen, setIsSidebarOpen, user
               <div className="flex-shrink-0 border-t border-slate-700/50 p-4">
                 <nav className="space-y-2">
                   {secondaryNavigation.map((item) => {
-                    const isActive = pathname === item.href
+                    const isActive = pathname === item.href || (item.name === 'Upgrade' && pathname === '/dashboard' && typeof window !== 'undefined' && window.location.search.includes('view=upgrade'))
                     return (
                       <Link
                         key={item.name}

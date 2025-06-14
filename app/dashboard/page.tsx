@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useUser } from '@clerk/nextjs'
 import Link from 'next/link'
 import { 
@@ -17,6 +17,7 @@ import {
   UsersIcon
 } from '@heroicons/react/24/solid'
 import DashboardSidebar from '../components/DashboardSidebar'
+import UpgradeSection from '../components/UpgradeSection'
 
 
 
@@ -104,6 +105,9 @@ function classNames(...classes: string[]) {
 
 export default function DashboardPage() {
   const { user, isLoaded } = useUser();
+  const searchParams = useSearchParams();
+  const currentView = searchParams.get('view') || 'dashboard';
+  
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -532,8 +536,12 @@ export default function DashboardPage() {
         {/* Main content */}
         <div className="flex-1 min-w-0 lg:ml-72">
           <div className="max-w-full px-4 sm:px-6 lg:px-8 pt-8">
-            {/* Boxed Content Container */}
-            <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+            {currentView === 'upgrade' ? (
+              <UpgradeSection />
+            ) : (
+              <>
+                {/* Boxed Content Container */}
+                <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
           {/* Header */}
               <div className="p-6 border-b border-gray-200">
                 <div className="flex items-center justify-between">
@@ -1239,6 +1247,11 @@ export default function DashboardPage() {
               </div>
             </div>
           )}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
     </div>
   )
 } 
