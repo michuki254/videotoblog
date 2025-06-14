@@ -11,7 +11,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white">
       {/* Navigation */}
-      <Navigation variant="transparent" />
+      <Navigation variant="home" />
 
       {/* Hero Section */}
       <section className="pt-24 pb-12 overflow-hidden bg-gradient-to-br from-indigo-50 via-white to-purple-50">

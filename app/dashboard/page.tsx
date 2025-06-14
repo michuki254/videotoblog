@@ -522,7 +522,11 @@ export default function DashboardPage() {
         <DashboardSidebar 
           isSidebarOpen={isSidebarOpen} 
           setIsSidebarOpen={setIsSidebarOpen}
-          user={user || undefined}
+          user={user ? {
+            firstName: user.firstName || undefined,
+            emailAddresses: user.emailAddresses,
+            imageUrl: user.imageUrl || undefined
+          } : undefined}
         />
 
         {/* Main content */}

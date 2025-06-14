@@ -288,7 +288,7 @@ function calculateOverallScore(
   breakdown.contentCompleteness = Math.min(completenessScore, 10);
 
   // Calculate total score
-  totalScore = Object.values(breakdown).reduce((sum: number, score: number) => sum + score, 0);
+  totalScore = (Object.values(breakdown) as number[]).reduce((sum: number, score: number) => sum + score, 0);
 
   return {
     score: Math.min(totalScore, 100),
@@ -298,7 +298,7 @@ function calculateOverallScore(
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check authentication
