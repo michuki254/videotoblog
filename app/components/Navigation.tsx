@@ -58,6 +58,9 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
             <Link href="#pricing" className="text-gray-700 hover:text-blue-600 transition-colors">
               Pricing
             </Link>
+            <Link href="/affiliates" className="text-gray-700 hover:text-blue-600 transition-colors">
+              Affiliates
+            </Link>
 
             {/* Authentication Buttons */}
             {isLoaded && (
@@ -133,6 +136,9 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
                 </Link>
               <Link href="#pricing" className="block px-3 py-2 text-gray-700 hover:text-blue-600 transition-colors">
                 Pricing
+              </Link>
+              <Link href="/affiliates" className="block px-3 py-2 text-gray-700 hover:text-blue-600 transition-colors">
+                Affiliates
               </Link>
               
               {/* Mobile Authentication */}
