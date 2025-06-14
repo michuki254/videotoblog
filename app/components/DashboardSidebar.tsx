@@ -10,7 +10,8 @@ import {
   UserIcon,
   Bars3Icon,
   XMarkIcon,
-  ArrowRightOnRectangleIcon
+  ArrowRightOnRectangleIcon,
+  SparklesIcon
 } from '@heroicons/react/24/outline'
 import { useAuth } from '@clerk/nextjs'
 
@@ -44,6 +45,7 @@ export default function DashboardSidebar({ isSidebarOpen, setIsSidebarOpen, user
   ]
 
   const secondaryNavigation = [
+    { name: 'Upgrade', href: '/upgrade', icon: SparklesIcon },
     { name: 'Settings', href: '/settings', icon: CogIcon },
     { name: 'Account', href: '/account', icon: UserIcon },
   ]
