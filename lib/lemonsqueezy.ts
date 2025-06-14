@@ -98,6 +98,13 @@ export async function createSubscriptionCheckout(
   customData?: Record<string, any>
 ) {
   try {
+    console.log('LemonSqueezy checkout params:', {
+      storeId: process.env.LEMONSQUEEZY_STORE_ID,
+      variantId,
+      email: customEmail,
+      redirectUrl: `${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL}/dashboard?success=true`
+    })
+
     const checkout = await createCheckout(
       process.env.LEMONSQUEEZY_STORE_ID!,
       variantId,
@@ -117,17 +124,24 @@ export async function createSubscriptionCheckout(
           media: [
             'https://your-domain.com/logo.png' // Replace with your logo
           ],
-          redirectUrl: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?success=true`,
+          redirectUrl: `${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL}/dashboard?success=true`,
           receiptButtonText: 'Go to Dashboard',
           receiptThankYouNote: 'Thank you for subscribing to VideotoBlog!',
         },
       }
     )
 
-    return checkout.data?.data
-  } catch (error) {
-    console.error('Error creating checkout:', error)
-    throw new Error('Failed to create checkout session')
+    console.log('LemonSqueezy response:', JSON.stringify(checkout, null, 2))
+    return checkout.data
+  } catch (error: any) {
+    console.error('Error creating checkout - Full error:', error)
+    console.error('Error message:', error?.message)
+    console.error('Error stack:', error?.stack)
+    if (error?.response) {
+      console.error('Error response:', error.response.data)
+      console.error('Error status:', error.response.status)
+    }
+    throw new Error(`Failed to create checkout session: ${error?.message || 'Unknown error'}`)
   }
 }
 

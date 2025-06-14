@@ -29,6 +29,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Create checkout session
+    console.log('Creating checkout with:', {
+      variantId: planData.variantId,
+      email,
+      customData: { userId, plan }
+    })
+
     const checkout = await createSubscriptionCheckout(
       planData.variantId,
       email,
@@ -38,13 +44,16 @@ export async function POST(request: NextRequest) {
       }
     )
 
+    console.log('Checkout result:', checkout)
+
     if (!checkout) {
+      console.error('Checkout creation failed - no data returned')
       return NextResponse.json({ error: 'Failed to create checkout session' }, { status: 500 })
     }
 
     return NextResponse.json({
-      checkoutUrl: checkout.attributes.url,
-      checkoutId: checkout.id,
+      checkoutUrl: checkout.data.attributes.url,
+      checkoutId: checkout.data.id,
     })
 
   } catch (error) {
