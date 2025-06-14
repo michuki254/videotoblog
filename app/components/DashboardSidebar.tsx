@@ -45,7 +45,7 @@ export default function DashboardSidebar({ isSidebarOpen, setIsSidebarOpen, user
   ]
 
   const secondaryNavigation = [
-    { name: 'Upgrade', href: '/dashboard?view=upgrade', icon: SparklesIcon },
+    { name: 'Upgrade', href: '/dashboard/upgrade', icon: SparklesIcon },
     { name: 'Settings', href: '/settings', icon: CogIcon },
     { name: 'Account', href: '/account', icon: UserIcon },
   ]
@@ -92,7 +92,7 @@ export default function DashboardSidebar({ isSidebarOpen, setIsSidebarOpen, user
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                 )}
-              </div>
+                </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-white truncate">
                   {user?.firstName || 'Welcome!'}
@@ -110,7 +110,7 @@ export default function DashboardSidebar({ isSidebarOpen, setIsSidebarOpen, user
               {navigation.map((item) => {
                 const isActive = pathname === item.href
                 return (
-              <Link
+                <Link
                     key={item.name}
                     href={item.href}
                     className={`
@@ -126,8 +126,8 @@ export default function DashboardSidebar({ isSidebarOpen, setIsSidebarOpen, user
                         mr-4 flex-shrink-0 h-6 w-6 transition-colors duration-200
                         ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'}
                       `}
-                  aria-hidden="true"
-                />
+                    aria-hidden="true"
+                  />
                     {item.name}
                     {isActive && (
                       <div className="ml-auto w-2 h-2 bg-white rounded-full opacity-75"></div>
@@ -135,16 +135,16 @@ export default function DashboardSidebar({ isSidebarOpen, setIsSidebarOpen, user
               </Link>
                 )
               })}
-            </nav>
-          </div>
-          
+              </nav>
+            </div>
+            
           {/* Bottom Navigation */}
           <div className="flex-shrink-0 border-t border-slate-700/50 p-4">
             <nav className="space-y-2">
               {secondaryNavigation.map((item) => {
-                const isActive = pathname === item.href || (item.name === 'Upgrade' && pathname === '/dashboard' && typeof window !== 'undefined' && window.location.search.includes('view=upgrade'))
+                const isActive = pathname === item.href
                 return (
-              <Link
+                <Link
                     key={item.name}
                     href={item.href}
                     className={`
@@ -160,10 +160,10 @@ export default function DashboardSidebar({ isSidebarOpen, setIsSidebarOpen, user
                         mr-4 flex-shrink-0 h-5 w-5 transition-colors duration-200
                         ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'}
                       `}
-                  aria-hidden="true"
-                />
+                    aria-hidden="true"
+                  />
                     {item.name}
-              </Link>
+                </Link>
                 )
               })}
             </nav>
@@ -179,8 +179,8 @@ export default function DashboardSidebar({ isSidebarOpen, setIsSidebarOpen, user
                   >
                     <action.icon
                       className="mr-4 flex-shrink-0 h-5 w-5 transition-colors duration-200 text-red-400 group-hover:text-red-200"
-                      aria-hidden="true"
-                    />
+                    aria-hidden="true"
+                  />
                     {action.name}
                   </button>
                 ))}
@@ -298,9 +298,9 @@ export default function DashboardSidebar({ isSidebarOpen, setIsSidebarOpen, user
               <div className="flex-shrink-0 border-t border-slate-700/50 p-4">
                 <nav className="space-y-2">
                   {secondaryNavigation.map((item) => {
-                    const isActive = pathname === item.href || (item.name === 'Upgrade' && pathname === '/dashboard' && typeof window !== 'undefined' && window.location.search.includes('view=upgrade'))
+                    const isActive = pathname === item.href
                     return (
-                      <Link
+                  <Link
                         key={item.name}
                         href={item.href}
                         className={`
@@ -310,17 +310,17 @@ export default function DashboardSidebar({ isSidebarOpen, setIsSidebarOpen, user
                             : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
                           }
                         `}
-                        onClick={() => setIsSidebarOpen(false)}
-                      >
+                    onClick={() => setIsSidebarOpen(false)}
+                  >
                         <item.icon
                           className={`
                             mr-4 flex-shrink-0 h-5 w-5 transition-colors duration-200
                             ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'}
                           `}
-                          aria-hidden="true"
-                        />
+                      aria-hidden="true"
+                    />
                         {item.name}
-                      </Link>
+                  </Link>
                     )
                   })}
                 </nav>
@@ -339,12 +339,12 @@ export default function DashboardSidebar({ isSidebarOpen, setIsSidebarOpen, user
                       >
                         <action.icon
                           className="mr-4 flex-shrink-0 h-5 w-5 transition-colors duration-200 text-red-400 group-hover:text-red-200"
-                          aria-hidden="true"
-                        />
+                      aria-hidden="true"
+                    />
                         {action.name}
                       </button>
                     ))}
-                  </nav>
+                </nav>
                 </div>
               </div>
             </div>
