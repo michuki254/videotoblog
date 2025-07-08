@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useUser } from '@clerk/nextjs';
 import ReactMarkdown from 'react-markdown';
 import Image from 'next/image';
+import DashboardSidebar from '../components/DashboardSidebar';
 
 interface BlogData {
   blogPost: string;
@@ -30,9 +32,18 @@ interface ConversionStep {
   progress?: number;
 }
 
+// Define a simplified user type that matches what DashboardSidebar expects
+interface SimplifiedUser {
+  firstName?: string;
+  emailAddresses?: { emailAddress: string }[];
+  imageUrl?: string;
+}
+
 export default function PreviewPage() {
+  const { user } = useUser();
   const [blogData, setBlogData] = useState<BlogData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [conversionSteps, setConversionSteps] = useState<ConversionStep[]>([
     {
       id: 'video-analysis',
@@ -378,25 +389,36 @@ Consider exploring related topics and implementing the strategies discussed to m
     return text.trim().split(/\s+/).length;
   };
 
-  // Show conversion progress
-  if (isConverting || (loading && !blogData)) {
-    const completedSteps = conversionSteps.filter(step => step.status === 'completed').length;
-    const totalSteps = conversionSteps.length;
-    const overallProgress = (completedSteps / totalSteps) * 100;
+  // Convert Clerk user to the simplified format expected by DashboardSidebar
+  const simplifiedUser: SimplifiedUser | undefined = user ? {
+    firstName: user.firstName || undefined,
+    emailAddresses: user.emailAddresses?.map(email => ({ emailAddress: email.emailAddress })),
+    imageUrl: user.imageUrl
+  } : undefined;
+
+  if (isConverting) {
+    const overallProgress = (currentStep / conversionSteps.length) * 100;
 
     return (
       <div className="min-h-screen bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <DashboardSidebar 
+          isSidebarOpen={isSidebarOpen} 
+          setIsSidebarOpen={setIsSidebarOpen} 
+          user={simplifiedUser}
+        />
+        
+        <div className="lg:pl-72">
+          <div className="px-4 sm:px-6 lg:px-8 py-8">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            {/* Progress Sidebar */}
+              {/* Sidebar with live conversion status */}
             <div className="lg:col-span-1">
               <div className="bg-white rounded-lg shadow-sm p-6 sticky top-8">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Conversion Progress</h2>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Conversion Progress</h3>
                 
-                {/* Overall Progress Bar */}
+                  {/* Overall Progress */}
                 <div className="mb-6">
-                  <div className="flex justify-between text-sm font-medium text-gray-700 mb-2">
-                    <span>Overall</span>
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-medium text-gray-700">Overall Progress</span>
                     <span>{Math.round(overallProgress)}%</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
@@ -544,6 +566,7 @@ Consider exploring related topics and implementing the strategies discussed to m
                       <p className="text-gray-600">Analyzing video content and preparing to generate your blog post...</p>
                     </div>
                   )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -555,7 +578,14 @@ Consider exploring related topics and implementing the strategies discussed to m
 
   if (!blogData) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50">
+        <DashboardSidebar 
+          isSidebarOpen={isSidebarOpen} 
+          setIsSidebarOpen={setIsSidebarOpen} 
+          user={simplifiedUser}
+        />
+        
+        <div className="lg:pl-72 flex items-center justify-center min-h-screen">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">No Blog Post Found</h1>
           <p className="text-gray-600 mb-8">It looks like there's no blog post to preview.</p>
@@ -565,6 +595,7 @@ Consider exploring related topics and implementing the strategies discussed to m
           >
             Create New Blog Post
           </button>
+          </div>
         </div>
       </div>
     );
@@ -574,9 +605,16 @@ Consider exploring related topics and implementing the strategies discussed to m
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <DashboardSidebar 
+        isSidebarOpen={isSidebarOpen} 
+        setIsSidebarOpen={setIsSidebarOpen} 
+        user={simplifiedUser}
+      />
+      
+      <div className="lg:pl-72">
       {/* Success Banner */}
       <div className="bg-green-50 border-b border-green-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+          <div className="px-4 sm:px-6 lg:px-8 py-3">
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
@@ -594,7 +632,7 @@ Consider exploring related topics and implementing the strategies discussed to m
 
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Blog Post Preview</h1>
@@ -633,7 +671,7 @@ Consider exploring related topics and implementing the strategies discussed to m
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Sidebar with metadata */}
           <div className="lg:col-span-1">
@@ -764,6 +802,7 @@ Consider exploring related topics and implementing the strategies discussed to m
                   >
                     {blogData.blogPost}
                   </ReactMarkdown>
+                </div>
                 </div>
               </div>
             </div>

@@ -16,6 +16,7 @@ export interface IBlogPost extends Document {
   seoOptimized: boolean
   hasScreenshots: boolean
   screenshotCount: number
+  screenshots?: mongoose.Types.ObjectId[]
   hasTableOfContents: boolean
   detailLevel: string
   wordpress?: {
@@ -97,6 +98,10 @@ const BlogPostSchema = new Schema<IBlogPost>({
     type: Number,
     default: 0,
   },
+  screenshots: [{
+    type: Schema.Types.ObjectId,
+    ref: 'Screenshot',
+  }],
   hasTableOfContents: {
     type: Boolean,
     default: false,

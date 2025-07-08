@@ -78,25 +78,6 @@ export default function DashboardUpgradePage() {
       limitations: [],
       popular: true,
       cta: 'Start Pro'
-    },
-    {
-      id: 'ENTERPRISE',
-      name: 'Enterprise',
-      price: 99.99,
-      description: 'Dedicated solution for large-scale operations.',
-      features: [
-        'Unlimited video conversions',
-        'Unlimited video duration',
-        'Custom AI model training',
-        'White-label solution',
-        'API access',
-        'Dedicated support',
-        'Custom integrations',
-        '500GB storage'
-      ],
-      limitations: [],
-      popular: false,
-      cta: 'Contact Sales'
     }
   ]
 
@@ -133,11 +114,6 @@ export default function DashboardUpgradePage() {
 
     if (planId === 'FREE') {
       return // Already on free plan
-    }
-
-    if (planId === 'ENTERPRISE') {
-      window.open('mailto:sales@videotoblog.ai?subject=Enterprise Plan Inquiry', '_blank')
-      return
     }
 
     setUpgrading(planId)
@@ -260,14 +236,13 @@ export default function DashboardUpgradePage() {
             )}
 
             {/* Plans Grid */}
-            <div className="grid lg:grid-cols-4 md:grid-cols-2 gap-6">
+            <div className="grid lg:grid-cols-3 md:grid-cols-2 gap-6">
               {plans.map((plan) => {
                 const isCurrentPlan = currentSubscription?.plan === plan.id
                 const hasActiveSubscription = currentSubscription && 
                   (currentSubscription.status === 'active' || currentSubscription.status === 'on_trial') &&
                   currentSubscription.plan !== 'FREE'
-                const isDowngrade = currentSubscription?.plan === 'ENTERPRISE' && plan.id !== 'ENTERPRISE' ||
-                                   currentSubscription?.plan === 'PRO' && plan.id === 'BASIC' ||
+                const isDowngrade = currentSubscription?.plan === 'PRO' && plan.id === 'BASIC' ||
                                    currentSubscription?.plan === 'PRO' && plan.id === 'FREE' ||
                                    currentSubscription?.plan === 'BASIC' && plan.id === 'FREE'
 
@@ -352,7 +327,7 @@ export default function DashboardUpgradePage() {
             {/* Help Section */}
             <div className="mt-12 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-4">Need Help Choosing?</h2>
-              <div className="grid md:grid-cols-3 gap-6 text-sm">
+              <div className="grid md:grid-cols-2 gap-6 text-sm">
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-2">Basic Plan</h3>
                   <p className="text-gray-600">Perfect for individuals and small creators who need regular video-to-blog conversions</p>
@@ -360,10 +335,6 @@ export default function DashboardUpgradePage() {
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-2">Pro Plan</h3>
                   <p className="text-gray-600">Ideal for content creators and businesses with higher volume needs and advanced features</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">Enterprise Plan</h3>
-                  <p className="text-gray-600">For large organizations requiring unlimited usage and custom integrations</p>
                 </div>
               </div>
             </div>

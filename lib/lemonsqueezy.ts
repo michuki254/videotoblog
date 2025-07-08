@@ -68,24 +68,6 @@ export const SUBSCRIPTION_PLANS = {
       maxVideoDuration: 7200, // 2 hours
       storageGB: 50,
     }
-  },
-  ENTERPRISE: {
-    name: 'Enterprise',
-    price: 99.99,
-    variantId: process.env.LEMONSQUEEZY_ENTERPRISE_VARIANT_ID!,
-    features: [
-      'Unlimited video conversions',
-      'Custom AI model training',
-      'White-label solution',
-      'API access',
-      'Dedicated support',
-      'Custom integrations'
-    ],
-    limits: {
-      videosPerMonth: -1, // unlimited
-      maxVideoDuration: -1, // unlimited
-      storageGB: 500,
-    }
   }
 }
 

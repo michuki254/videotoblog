@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@clerk/clerk-sdk-node": "^4.13.23",
     "@clerk/nextjs": "^6.21.0",
     "@heroicons/react": "^2.2.0",
     "@lemonsqueezy/lemonsqueezy.js": "^4.0.0",
@@ -27,6 +28,7 @@
     "react-hot-toast": "^2.4.1",
     "react-markdown": "^9.1.0",
     "sharp": "^0.33.5",
+    "svix": "^1.67.0",
     "youtube-transcript": "^1.2.1",
     "ytdl-core": "^4.11.5"
   },

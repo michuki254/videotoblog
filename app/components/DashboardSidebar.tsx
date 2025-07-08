@@ -48,6 +48,9 @@ export default function DashboardSidebar({ isSidebarOpen, setIsSidebarOpen, user
     { name: 'Upgrade', href: '/dashboard/upgrade', icon: SparklesIcon },
     { name: 'Settings', href: '/settings', icon: CogIcon },
     { name: 'Account', href: '/account', icon: UserIcon },
+    ...(user?.publicMetadata?.role === 'ADMIN' || user?.publicMetadata?.role === 'SUPER_ADMIN' ? [
+      { name: 'Admin Panel', href: '/admin', icon: ShieldCheckIcon }
+    ] : []),
   ]
 
   const quickActions = [

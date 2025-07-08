@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import connectToDatabase from '../../../../lib/mongodb';
 import BlogPost from '../../../../models/BlogPost';
+import Screenshot from '../../../../models/Screenshot';
 
 export async function GET(
   req: Request,
@@ -175,6 +176,14 @@ export async function DELETE(
         { error: 'Post not found' },
         { status: 404 }
       );
+    }
+
+    // Delete all associated screenshots
+    if (deletedPost.screenshots && deletedPost.screenshots.length > 0) {
+      await Screenshot.deleteMany({
+        _id: { $in: deletedPost.screenshots }
+      });
+      console.log(`Deleted ${deletedPost.screenshots.length} screenshots for post ${postId}`);
     }
 
     return NextResponse.json({ 

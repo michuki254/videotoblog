@@ -6,7 +6,7 @@ import { useUser } from '@clerk/nextjs'
 import Link from 'next/link'
 import Image from 'next/image'
 import ReactMarkdown from 'react-markdown'
-import Navigation from '../../components/Navigation'
+import DashboardSidebar from '../../components/DashboardSidebar'
 import JSZip from 'jszip'
 
 interface BlogPost {
@@ -436,6 +436,9 @@ export default function BlogPostPage() {
   const [testingBloggerConnection, setTestingBloggerConnection] = useState(false)
   const [bloggerConnectionStatus, setBloggerConnectionStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const [bloggerConnectionError, setBloggerConnectionError] = useState<string | null>(null)
+
+  // Sidebar state
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   useEffect(() => {
     console.log('🔍 useEffect triggered:', { isLoaded, paramsId: params.id, paramType: typeof params.id });
@@ -1587,9 +1590,18 @@ Best regards,
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navigation variant="default" />
+      <DashboardSidebar
+        isSidebarOpen={isSidebarOpen}
+        setIsSidebarOpen={setIsSidebarOpen}
+        user={{
+          id: user.id,
+          fullName: user.fullName,
+          emailAddress: user.emailAddresses[0].emailAddress,
+          imageUrl: user.imageUrl
+        }}
+      />
       
-      <div className="pt-20 pb-8">
+      <div className="lg:pl-72">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {loading ? (
             <div className="flex items-center justify-center min-h-[400px]">

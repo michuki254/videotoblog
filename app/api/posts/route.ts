@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import connectToDatabase from '../../../lib/mongodb';
 import BlogPost from '../../../models/BlogPost';
+import Screenshot from '../../../models/Screenshot';
 
 export async function GET() {
   try {
@@ -99,6 +100,14 @@ export async function DELETE(req: Request) {
         { error: 'Post not found or you do not have permission to delete it' },
         { status: 404 }
       );
+    }
+
+    // Delete all associated screenshots
+    if (deletedPost.screenshots && deletedPost.screenshots.length > 0) {
+      await Screenshot.deleteMany({
+        _id: { $in: deletedPost.screenshots }
+      });
+      console.log(`Deleted ${deletedPost.screenshots.length} screenshots for post ${postId}`);
     }
 
     return NextResponse.json({
