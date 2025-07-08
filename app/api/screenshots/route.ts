@@ -151,9 +151,9 @@ export async function POST(req: Request) {
 
     let screenshots: ScreenshotData[] = [];
 
-    // For now, skip browser automation and use YouTube thumbnails directly
-    // This ensures screenshots work even without Playwright browsers installed
-    const skipBrowserAutomation = true;
+    // Now that Playwright browsers are installed, enable browser automation
+    // Set to true to use YouTube thumbnails, false to use real video screenshots
+    const skipBrowserAutomation = false;
     
     if (!skipBrowserAutomation) {
       try {

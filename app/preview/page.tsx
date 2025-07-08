@@ -249,9 +249,24 @@ Consider exploring related topics and implementing the strategies discussed to m
       });
 
       const response = await Promise.race([apiPromise, timeoutPromise]) as Response;
-      const data = await response.json();
+      
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        console.error('Failed to parse response:', parseError);
+        console.error('Response status:', response.status);
+        console.error('Response text:', await response.text());
+        updateStepStatus('content-generation', 'error');
+        throw new Error('Failed to parse server response');
+      }
       
       if (!response.ok) {
+        console.error('Conversion failed:', {
+          status: response.status,
+          error: data.error,
+          details: data.details
+        });
         updateStepStatus('content-generation', 'error');
         throw new Error(data.error || 'Failed to convert video');
       }

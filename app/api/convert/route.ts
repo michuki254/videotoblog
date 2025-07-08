@@ -254,6 +254,13 @@ export async function POST(req: Request) {
         console.log('Using simple timestamps:', simpleTimestamps);
         
         // Call screenshot API with timestamps and blog post ID
+        console.log('Calling screenshot API with:', {
+          url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/screenshots`,
+          videoUrl: url,
+          timestamps: simpleTimestamps,
+          blogPostId: tempBlogPost._id.toString()
+        });
+        
         const screenshotResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/screenshots`, {
           method: 'POST',
           headers: {
@@ -498,6 +505,17 @@ export async function POST(req: Request) {
 
   } catch (error: unknown) {
     console.error('Conversion error:', error);
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+    
+    // Clean up temporary blog post if it was created
+    if (tempBlogPostId) {
+      try {
+        await BlogPost.findByIdAndDelete(tempBlogPostId);
+        console.log('Cleaned up temporary blog post');
+      } catch (cleanupError) {
+        console.error('Failed to clean up temporary blog post:', cleanupError);
+      }
+    }
     
     // Return a structured error response instead of throwing
     return NextResponse.json({
