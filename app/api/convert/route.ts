@@ -198,7 +198,7 @@ export async function POST(req: Request) {
             content: contentAnalysisPrompt
           }
         ],
-        model: "gpt-4.1",
+        model: "gpt-4-turbo-preview",
         temperature: 0.3,
         max_tokens: 800,
       });
@@ -222,6 +222,7 @@ export async function POST(req: Request) {
     if (includeScreenshots && screenshots.length === 0) {
       try {
         // First, we need to create a temporary blog post to get an ID
+        console.log('Creating temporary blog post for screenshots...');
         const tempBlogPost = await BlogPost.create({
           userId: user._id,
           clerkId: userId,
@@ -278,8 +279,15 @@ export async function POST(req: Request) {
           finalScreenshots = screenshotData.screenshots || [];
           console.log('Screenshots generated:', finalScreenshots.length);
         } else {
-          const errorData = await screenshotResponse.json();
-          console.error('Screenshot API error:', screenshotResponse.status, errorData);
+          console.error('Screenshot API returned error status:', screenshotResponse.status);
+          try {
+            const errorData = await screenshotResponse.json();
+            console.error('Screenshot API error details:', errorData);
+          } catch (e) {
+            console.error('Could not parse screenshot error response');
+          }
+          // Continue without screenshots rather than failing the entire conversion
+          finalScreenshots = [];
         }
         
         // We'll update the blog post later with the actual content
@@ -407,24 +415,37 @@ export async function POST(req: Request) {
       ${useEmojis ? 'Feel free to use emojis where appropriate to enhance engagement.' : ''}
     `;
 
-    const completion = await openai.chat.completions.create({
-      messages: [
-        {
-          role: "system",
-          content: `You are an expert blog writer. Create high-quality, engaging content based on video transcripts. Always use proper markdown formatting and write in clear, professional English. ${styleInstructions ? `Follow these style guidelines: ${styleInstructions}` : ''}`
-        },
-        {
-          role: "user",
-          content: enhancedPrompt
-        }
-      ],
-      model: "gpt-4.1",
-      temperature: tone === 'formal' ? 0.3 : tone === 'enthusiastic' ? 0.8 : 0.7,
-      max_tokens: Math.min(wordCount * 2, 4000),
-    });
+    let blogContent = '';
+    try {
+      console.log('Calling OpenAI API for blog generation...');
+      const completion = await openai.chat.completions.create({
+        messages: [
+          {
+            role: "system",
+            content: `You are an expert blog writer. Create high-quality, engaging content based on video transcripts. Always use proper markdown formatting and write in clear, professional English. ${styleInstructions ? `Follow these style guidelines: ${styleInstructions}` : ''}`
+          },
+          {
+            role: "user",
+            content: enhancedPrompt
+          }
+        ],
+        model: "gpt-4-turbo-preview",
+        temperature: tone === 'formal' ? 0.3 : tone === 'enthusiastic' ? 0.8 : 0.7,
+        max_tokens: Math.min(wordCount * 2, 4000),
+      });
 
-    const blogContent = completion.choices[0].message.content || '';
-    console.log('Blog content generated, length:', blogContent.length);
+      blogContent = completion.choices[0].message.content || '';
+      console.log('Blog content generated, length:', blogContent.length);
+    } catch (openaiError: any) {
+      console.error('OpenAI API error:', openaiError);
+      console.error('OpenAI error details:', {
+        message: openaiError.message,
+        type: openaiError.type,
+        code: openaiError.code,
+        status: openaiError.status
+      });
+      throw new Error(`Failed to generate blog content: ${openaiError.message || 'OpenAI API error'}`);
+    }
 
     if (!blogContent || blogContent.length < 200) {
       throw new Error('Generated content too short or empty');

@@ -250,25 +250,31 @@ Consider exploring related topics and implementing the strategies discussed to m
 
       const response = await Promise.race([apiPromise, timeoutPromise]) as Response;
       
+      // Check response status first
+      if (!response.ok) {
+        console.error('Conversion failed with status:', response.status);
+        let errorData;
+        try {
+          errorData = await response.json();
+          console.error('Error details:', errorData);
+        } catch (parseError) {
+          console.error('Failed to parse error response:', parseError);
+          const errorText = await response.text();
+          console.error('Error response text:', errorText);
+          errorData = { error: 'Server error', details: errorText };
+        }
+        updateStepStatus('content-generation', 'error');
+        throw new Error(errorData.error || 'Failed to convert video');
+      }
+      
+      // Now parse successful response
       let data;
       try {
         data = await response.json();
       } catch (parseError) {
-        console.error('Failed to parse response:', parseError);
-        console.error('Response status:', response.status);
-        console.error('Response text:', await response.text());
+        console.error('Failed to parse successful response:', parseError);
         updateStepStatus('content-generation', 'error');
         throw new Error('Failed to parse server response');
-      }
-      
-      if (!response.ok) {
-        console.error('Conversion failed:', {
-          status: response.status,
-          error: data.error,
-          details: data.details
-        });
-        updateStepStatus('content-generation', 'error');
-        throw new Error(data.error || 'Failed to convert video');
       }
 
       // Validate the generated content before proceeding
