@@ -214,9 +214,87 @@ export async function POST(req: Request) {
       console.error('Content analysis failed, using fallback:', error);
     }
 
-    // Step 2: We'll handle screenshots after creating the blog post
+    // Step 2: Handle screenshots BEFORE generating blog content
     let finalScreenshots = screenshots;
     let screenshotPlacements: ScreenshotPlacement[] = [];
+    let tempBlogPostId: any = null;
+    
+    if (includeScreenshots && screenshots.length === 0) {
+      try {
+        // First, we need to create a temporary blog post to get an ID
+        const tempBlogPost = await BlogPost.create({
+          userId: user._id,
+          clerkId: userId,
+          title: 'Generating...',
+          content: 'Generating blog content...',
+          videoUrl: url,
+          videoId: videoId,
+          thumbnail: videoMetadata.thumbnail || '',
+          wordCount: 0,
+          contentType: contentAnalysis.contentType,
+          status: 'draft',
+          seoOptimized: false,
+          hasScreenshots: false,
+          screenshotCount: 0,
+          screenshots: [],
+          hasTableOfContents: false,
+          detailLevel: detailLevel,
+          contentAnalysis: {
+            contentType: contentAnalysis.contentType,
+            confidence: contentAnalysis.confidence,
+            reasoning: contentAnalysis.reasoning,
+            targetAudience: contentAnalysis.targetAudience,
+            keyTopics: contentAnalysis.keyTopics,
+            suggestedTone: contentAnalysis.suggestedStructure.tone
+          },
+        });
+        
+        // Use simple timestamp generation
+        const simpleTimestamps = generateSimpleTimestamps(screenshotCount);
+        console.log('Using simple timestamps:', simpleTimestamps);
+        
+        // Call screenshot API with timestamps and blog post ID
+        const screenshotResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/screenshots`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            url: url,
+            timestamps: simpleTimestamps,
+            blogPostId: tempBlogPost._id.toString(),
+          }),
+        });
+
+        if (screenshotResponse.ok) {
+          const screenshotData = await screenshotResponse.json();
+          finalScreenshots = screenshotData.screenshots || [];
+          console.log('Screenshots generated:', finalScreenshots.length);
+        } else {
+          const errorData = await screenshotResponse.json();
+          console.error('Screenshot API error:', screenshotResponse.status, errorData);
+        }
+        
+        // We'll update the blog post later with the actual content
+        // Store the temp ID for later
+        tempBlogPostId = tempBlogPost._id;
+      } catch (error) {
+        console.error('Screenshot generation failed:', error);
+        finalScreenshots = [];
+      }
+    }
+    
+    // Create screenshot placements BEFORE generating blog content
+    if (finalScreenshots.length > 0) {
+      screenshotPlacements = finalScreenshots.map((screenshot: Screenshot, index: number) => ({
+        timestamp: screenshot.timestamp,
+        url: screenshot.url,
+        section: index === 0 ? "Introduction" : index === finalScreenshots.length - 1 ? "Conclusion" : "Main Content",
+        caption: `Screenshot from the video at ${screenshot.timestamp} seconds`,
+        reasoning: "Visual reference to support the content",
+        context: "Illustrates key points discussed in this section"
+      }));
+    }
 
     // Step 3: Generate blog post (enhanced with writing style)
     console.log('Starting blog generation...');
@@ -348,91 +426,57 @@ export async function POST(req: Request) {
     // Calculate word count
     const actualWordCount = blogContent.trim().split(/\s+/).length;
 
-    // Save blog post to database (initially without screenshots)
-    const blogPost = await BlogPost.create({
-      userId: user._id,
-      clerkId: userId,
-      title: videoMetadata.title || 'Generated Blog Post',
-      content: blogContent,
-      videoUrl: url,
-      videoId: videoId,
-      thumbnail: videoMetadata.thumbnail || '',
-      primaryKeyphrase: primaryKeyphrase || undefined,
-      wordCount: actualWordCount,
-      contentType: contentAnalysis.contentType,
-      status: 'draft',
-      seoOptimized: !!seo,
-      hasScreenshots: false,
-      screenshotCount: 0,
-      screenshots: [],
-      hasTableOfContents: !!tableOfContents,
-      detailLevel: detailLevel,
-      contentAnalysis: {
+    // Save or update blog post to database
+    let blogPost;
+    if (tempBlogPostId) {
+      // Update the temporary blog post with the actual content
+      blogPost = await BlogPost.findByIdAndUpdate(
+        tempBlogPostId,
+        {
+          title: videoMetadata.title || 'Generated Blog Post',
+          content: blogContent,
+          primaryKeyphrase: primaryKeyphrase || undefined,
+          wordCount: actualWordCount,
+          seoOptimized: !!seo,
+          hasScreenshots: finalScreenshots.length > 0,
+          screenshotCount: finalScreenshots.length,
+          screenshots: finalScreenshots.map((s: any) => s.id).filter(Boolean),
+          hasTableOfContents: !!tableOfContents,
+        },
+        { new: true }
+      );
+    } else {
+      // Create a new blog post if no temp was created
+      blogPost = await BlogPost.create({
+        userId: user._id,
+        clerkId: userId,
+        title: videoMetadata.title || 'Generated Blog Post',
+        content: blogContent,
+        videoUrl: url,
+        videoId: videoId,
+        thumbnail: videoMetadata.thumbnail || '',
+        primaryKeyphrase: primaryKeyphrase || undefined,
+        wordCount: actualWordCount,
         contentType: contentAnalysis.contentType,
-        confidence: contentAnalysis.confidence,
-        reasoning: contentAnalysis.reasoning,
-        targetAudience: contentAnalysis.targetAudience,
-        keyTopics: contentAnalysis.keyTopics,
-        suggestedTone: contentAnalysis.suggestedStructure.tone
-      },
-    });
-
-    console.log('Blog post saved to database with ID:', blogPost._id);
-
-    // Now handle screenshots with the blog post ID
-    if (includeScreenshots && screenshots.length === 0) {
-      try {
-        // Use simple timestamp generation instead of complex AI analysis
-        const simpleTimestamps = generateSimpleTimestamps(screenshotCount);
-        console.log('Using simple timestamps:', simpleTimestamps);
-        
-        // Call screenshot API with simple timestamps and blog post ID
-        const screenshotResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/screenshots`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            url: url,
-            timestamps: simpleTimestamps,
-            blogPostId: blogPost._id.toString(),
-          }),
-        });
-
-        if (screenshotResponse.ok) {
-          const screenshotData = await screenshotResponse.json();
-          finalScreenshots = screenshotData.screenshots || [];
-          console.log('Screenshots generated:', finalScreenshots.length);
-          
-          // Update blog post with screenshot references
-          if (finalScreenshots.length > 0) {
-            const screenshotIds = finalScreenshots.map((s: any) => s.id).filter(Boolean);
-            blogPost.screenshots = screenshotIds;
-            blogPost.hasScreenshots = true;
-            blogPost.screenshotCount = finalScreenshots.length;
-            await blogPost.save();
-          }
-        } else {
-          const errorData = await screenshotResponse.json();
-          console.error('Screenshot API error:', screenshotResponse.status, errorData);
-        }
-      } catch (error) {
-        console.error('Screenshot generation failed:', error);
-        finalScreenshots = [];
-      }
+        status: 'draft',
+        seoOptimized: !!seo,
+        hasScreenshots: finalScreenshots.length > 0,
+        screenshotCount: finalScreenshots.length,
+        screenshots: finalScreenshots.map((s: any) => s.id).filter(Boolean),
+        hasTableOfContents: !!tableOfContents,
+        detailLevel: detailLevel,
+        contentAnalysis: {
+          contentType: contentAnalysis.contentType,
+          confidence: contentAnalysis.confidence,
+          reasoning: contentAnalysis.reasoning,
+          targetAudience: contentAnalysis.targetAudience,
+          keyTopics: contentAnalysis.keyTopics,
+          suggestedTone: contentAnalysis.suggestedStructure.tone
+        },
+      });
     }
 
-    // Create simple screenshot placements
-    if (finalScreenshots.length > 0) {
-      screenshotPlacements = finalScreenshots.map((screenshot: Screenshot, index: number) => ({
-          timestamp: screenshot.timestamp,
-          url: screenshot.url,
-        section: index === 0 ? "Introduction" : index === finalScreenshots.length - 1 ? "Conclusion" : "Main Content",
-        caption: `Screenshot from the video at ${screenshot.timestamp} seconds`,
-        reasoning: "Visual reference to support the content",
-        context: "Illustrates key points discussed in this section"
-        }));
-      }
+    console.log('Blog post saved to database with ID:', blogPost._id);
 
     return NextResponse.json({
       blogPost: blogContent,
