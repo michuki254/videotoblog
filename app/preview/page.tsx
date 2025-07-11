@@ -73,14 +73,19 @@ export default function PreviewPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [isConverting, setIsConverting] = useState(false);
   const [tempBlogData, setTempBlogData] = useState<Partial<BlogData> | null>(null);
+  const [showCopySuccess, setShowCopySuccess] = useState(false);
+  const [isConversionInProgress, setIsConversionInProgress] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     // Check for pending conversion FIRST (highest priority)
     const conversionData = sessionStorage.getItem('pendingConversion');
-    if (conversionData) {
+    if (conversionData && !isConversionInProgress) {
+      // Clear immediately to prevent duplicate conversions
+      sessionStorage.removeItem('pendingConversion');
       setIsConverting(true);
       setLoading(false);
+      setIsConversionInProgress(true);
       startConversion(JSON.parse(conversionData));
       return;
     }
@@ -223,7 +228,7 @@ Consider exploring related topics and implementing the strategies discussed to m
 
       // Add timeout for the API call
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Generation timeout - the process is taking longer than expected')), 180000) // 3 minute timeout
+        setTimeout(() => reject(new Error('Generation timeout - the video conversion is taking longer than expected. This can happen with longer videos or during high server load. Please try again.')), 240000) // 4 minute timeout
       );
 
       const apiPromise = fetch('/api/convert', {
@@ -253,18 +258,32 @@ Consider exploring related topics and implementing the strategies discussed to m
       // Check response status first
       if (!response.ok) {
         console.error('Conversion failed with status:', response.status);
-        let errorData;
-        try {
-          errorData = await response.json();
-          console.error('Error details:', errorData);
-        } catch (parseError) {
-          console.error('Failed to parse error response:', parseError);
-          const errorText = await response.text();
-          console.error('Error response text:', errorText);
-          errorData = { error: 'Server error', details: errorText };
+        let errorData = { error: 'Server error', details: 'Unknown error' };
+        
+        // Try to get error details from response
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          try {
+            errorData = await response.json();
+            console.error('Error details:', errorData);
+          } catch (parseError) {
+            console.error('Failed to parse error response as JSON:', parseError);
+            // Response body might be empty or corrupted
+          }
+        } else {
+          try {
+            const errorText = await response.text();
+            if (errorText) {
+              console.error('Error response text:', errorText);
+              errorData = { error: 'Server error', details: errorText };
+            }
+          } catch (textError) {
+            console.error('Failed to read error response as text:', textError);
+          }
         }
+        
         updateStepStatus('content-generation', 'error');
-        throw new Error(errorData.error || 'Failed to convert video');
+        throw new Error(errorData.error || `Server error (${response.status})`);
       }
       
       // Now parse successful response
@@ -337,10 +356,12 @@ Consider exploring related topics and implementing the strategies discussed to m
       sessionStorage.removeItem('pendingConversion');
       setBlogData(finalBlogData);
       setIsConverting(false);
+      setIsConversionInProgress(false); // Reset the flag on success
 
     } catch (error) {
       console.error('Conversion error:', error);
       setIsConverting(false);
+      setIsConversionInProgress(false); // Reset the flag on error
       
       // Handle different types of errors
       let fallbackTitle = 'Video Content Analysis';
@@ -402,7 +423,8 @@ Consider exploring related topics and implementing the strategies discussed to m
   const handleCopyToClipboard = () => {
     if (blogData?.blogPost) {
       navigator.clipboard.writeText(blogData.blogPost);
-      alert('Blog post copied to clipboard!');
+      setShowCopySuccess(true);
+      setTimeout(() => setShowCopySuccess(false), 3000);
     }
   };
 
@@ -421,7 +443,7 @@ Consider exploring related topics and implementing the strategies discussed to m
     const overallProgress = (currentStep / conversionSteps.length) * 100;
 
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
         <DashboardSidebar 
           isSidebarOpen={isSidebarOpen} 
           setIsSidebarOpen={setIsSidebarOpen} 
@@ -430,21 +452,36 @@ Consider exploring related topics and implementing the strategies discussed to m
         
         <div className="lg:pl-72">
           <div className="px-4 sm:px-6 lg:px-8 py-8">
+            {/* Header */}
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold text-gray-900">Generating Your Blog Post</h1>
+              <p className="text-gray-600 mt-2">We're converting your video into an engaging blog post</p>
+            </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
               {/* Sidebar with live conversion status */}
             <div className="lg:col-span-1">
-              <div className="bg-white rounded-lg shadow-sm p-6 sticky top-8">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Conversion Progress</h3>
+              <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 sticky top-8 overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 pointer-events-none"></div>
+                <div className="relative">
+                  <div className="flex items-center mb-6">
+                    <div className="h-10 w-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center mr-3">
+                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900">Progress Tracker</h3>
+                  </div>
                 
                   {/* Overall Progress */}
                 <div className="mb-6">
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-sm font-medium text-gray-700">Overall Progress</span>
-                    <span>{Math.round(overallProgress)}%</span>
+                    <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">{Math.round(overallProgress)}%</span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
                     <div 
-                      className="bg-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
+                      className="h-full rounded-full transition-all duration-500 ease-out bg-gradient-to-r from-blue-500 to-indigo-600"
                       style={{ width: `${overallProgress}%` }}
                     ></div>
                   </div>
@@ -496,45 +533,66 @@ Consider exploring related topics and implementing the strategies discussed to m
                 </div>
 
                 {/* Current Status */}
-                <div className="mt-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
                   <div className="flex items-center">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-                    <span className="text-sm text-blue-800 font-medium">
-                      {currentStep < conversionSteps.length ? conversionSteps[currentStep - 1]?.title || 'Initializing...' : 'Finalizing...'}
-                    </span>
+                    <div className="relative">
+                      <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-200 border-t-blue-600 mr-3"></div>
+                      <div className="absolute inset-0 animate-ping rounded-full h-5 w-5 border border-blue-400 opacity-20 mr-3"></div>
+                    </div>
+                    <div>
+                      <p className="text-xs text-blue-600 font-medium">Currently Processing</p>
+                      <p className="text-sm text-blue-900 font-semibold">
+                        {currentStep < conversionSteps.length ? conversionSteps[currentStep - 1]?.title || 'Initializing...' : 'Finalizing...'}
+                      </p>
+                    </div>
                   </div>
+                </div>
                 </div>
               </div>
             </div>
 
             {/* Main content area with live blog generation */}
             <div className="lg:col-span-3">
-              <div className="bg-white rounded-lg shadow-sm">
+              <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
                 {/* Header */}
-                <div className="border-b border-gray-200 p-6">
-                  <h1 className="text-2xl font-bold text-gray-900">
-                    {tempBlogData?.title || 'Generating Your Blog Post...'}
-                  </h1>
-                  <p className="text-gray-600 mt-2">
-                    Processing your video content
-                  </p>
+                <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 p-8">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-2xl font-bold text-gray-900">
+                        {tempBlogData?.title || 'Generating Your Blog Post'}
+                      </h2>
+                      <p className="text-gray-600 mt-2 flex items-center">
+                        <svg className="w-4 h-4 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                        Processing your video content with AI
+                      </p>
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      <span className="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-700">
+                        <span className="mr-2 h-2 w-2 bg-blue-500 rounded-full animate-pulse"></span>
+                        Live Generation
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Blog post header */}
                 {tempBlogData?.thumbnail && (
-                  <div className="w-full h-48 bg-gray-200 overflow-hidden">
+                  <div className="relative w-full h-64 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent z-10"></div>
                     <Image
                       src={tempBlogData.thumbnail}
                       alt="Blog post thumbnail"
                       className="w-full h-full object-cover"
-                      width={400}
-                      height={200}
+                      width={800}
+                      height={400}
                     />
                   </div>
                 )}
                 
                 {/* Live content generation */}
-                <div className="p-6">
+                <div className="p-8">
                   {tempBlogData?.blogPost ? (
                     <div className="prose prose-lg max-w-none">
                       <ReactMarkdown
@@ -582,9 +640,13 @@ Consider exploring related topics and implementing the strategies discussed to m
                       </ReactMarkdown>
                     </div>
                   ) : (
-                    <div className="text-center py-12">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                      <p className="text-gray-600">Analyzing video content and preparing to generate your blog post...</p>
+                    <div className="text-center py-16">
+                      <div className="relative inline-block">
+                        <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-blue-600 mx-auto"></div>
+                        <div className="absolute inset-0 animate-ping rounded-full h-16 w-16 border-2 border-blue-400 opacity-20"></div>
+                      </div>
+                      <p className="text-gray-600 mt-6 text-lg">Analyzing video content and preparing to generate your blog post...</p>
+                      <p className="text-gray-500 mt-2 text-sm">This may take a few moments</p>
                     </div>
                   )}
                   </div>
@@ -599,7 +661,7 @@ Consider exploring related topics and implementing the strategies discussed to m
 
   if (!blogData) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
         <DashboardSidebar 
           isSidebarOpen={isSidebarOpen} 
           setIsSidebarOpen={setIsSidebarOpen} 
@@ -607,15 +669,22 @@ Consider exploring related topics and implementing the strategies discussed to m
         />
         
         <div className="lg:pl-72 flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">No Blog Post Found</h1>
-          <p className="text-gray-600 mb-8">It looks like there's no blog post to preview.</p>
-          <button
-            onClick={() => router.push('/convert')}
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Create New Blog Post
-          </button>
+        <div className="text-center max-w-md mx-auto px-4">
+          <div className="bg-white rounded-2xl shadow-xl p-12 border border-gray-100">
+            <div className="w-20 h-20 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg className="w-10 h-10 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-3">No Blog Post Found</h1>
+            <p className="text-gray-600 mb-8">Start by converting a video to create your first blog post.</p>
+            <button
+              onClick={() => router.push('/convert')}
+              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all transform hover:scale-105 font-medium shadow-lg"
+            >
+              Create New Blog Post
+            </button>
+          </div>
           </div>
         </div>
       </div>
@@ -625,7 +694,7 @@ Consider exploring related topics and implementing the strategies discussed to m
   const wordCount = calculateWordCount(blogData.blogPost);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
       <DashboardSidebar 
         isSidebarOpen={isSidebarOpen} 
         setIsSidebarOpen={setIsSidebarOpen} 
@@ -634,19 +703,32 @@ Consider exploring related topics and implementing the strategies discussed to m
       
       <div className="lg:pl-72">
       {/* Success Banner */}
-      <div className="bg-green-50 border-b border-green-200">
-          <div className="px-4 sm:px-6 lg:px-8 py-3">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.236 4.53L8.53 10.96a.75.75 0 00-1.06 1.061l2.03 2.03a.75.75 0 001.137-.089l3.857-5.481z" clipRule="evenodd" />
-              </svg>
+      <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-b border-green-200">
+          <div className="px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <div className="h-10 w-10 bg-green-500 rounded-full flex items-center justify-center animate-bounce">
+                  <svg className="h-6 w-6 text-white" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.236 4.53L8.53 10.96a.75.75 0 00-1.06 1.061l2.03 2.03a.75.75 0 001.137-.089l3.857-5.481z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              </div>
+              <div className="ml-4">
+                <p className="text-base font-semibold text-green-900">
+                  Blog post successfully generated!
+                </p>
+                <p className="text-sm text-green-700">Your content is ready for review and publishing</p>
+              </div>
             </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-green-800">
-                🎉 Blog post successfully generated! Your content is ready for review.
-              </p>
-            </div>
+            {showCopySuccess && (
+              <div className="animate-fade-in bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center">
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Copied to clipboard!
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -654,38 +736,40 @@ Consider exploring related topics and implementing the strategies discussed to m
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
           <div className="px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-6 gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Blog Post Preview</h1>
-              <p className="text-gray-600">Review and edit your generated content</p>
+              <h1 className="text-3xl font-bold text-gray-900 flex items-center">
+                <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Blog Post Preview</span>
+              </h1>
+              <p className="text-gray-600 mt-1">Review and edit your generated content</p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3">
               <button
                 onClick={handleCopyToClipboard}
-                className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-2"
+                className="group bg-white border-2 border-gray-300 text-gray-700 px-5 py-2.5 rounded-lg hover:border-gray-400 hover:bg-gray-50 transition-all flex items-center gap-2 shadow-sm"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a1 1 0 011 1v3M9 7h4" />
                 </svg>
                 Copy Content
               </button>
               <button
                 onClick={handleEditPost}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                className="group bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-5 py-2.5 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all flex items-center gap-2 shadow-lg transform hover:scale-105"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
                 Edit Post
               </button>
               <button
                 onClick={handleNewPost}
-                className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-2"
+                className="group bg-gradient-to-r from-gray-600 to-gray-700 text-white px-5 py-2.5 rounded-lg hover:from-gray-700 hover:to-gray-800 transition-all flex items-center gap-2 shadow-lg"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 group-hover:rotate-180 transition-transform duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m-15.355-2A8.001 8.001 0 0020.58 15m0 0H15" />
                 </svg>
-                Generate New Blog Post
+                New Blog Post
               </button>
             </div>
           </div>
@@ -696,55 +780,58 @@ Consider exploring related topics and implementing the strategies discussed to m
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Sidebar with metadata */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-sm p-6 sticky top-8">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Content Analysis</h3>
+            <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 sticky top-8">
+              <div className="flex items-center mb-6">
+                <div className="h-10 w-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center mr-3">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900">Content Analysis</h3>
+              </div>
               
               {/* Content Type */}
-              <div className="mb-4">
+              <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium text-gray-700">Content Type</span>
-                  <span className="text-sm text-gray-500">{Math.round(blogData.contentAnalysis.confidence * 100)}% confidence</span>
+                  <span className="text-xs text-gray-500 bg-white px-2 py-1 rounded-full">{Math.round(blogData.contentAnalysis.confidence * 100)}% confidence</span>
                 </div>
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md">
                   {blogData.contentAnalysis.contentType}
                 </span>
               </div>
 
-              {/* Target Audience */}
-              <div className="mb-4">
-                <span className="text-sm font-medium text-gray-700 block mb-1">Target Audience</span>
-                <span className="text-sm text-gray-600">{blogData.contentAnalysis.targetAudience}</span>
-              </div>
-
-              {/* Suggested Tone */}
-              <div className="mb-4">
-                <span className="text-sm font-medium text-gray-700 block mb-1">Tone</span>
-                <span className="text-sm text-gray-600 capitalize">{blogData.contentAnalysis.suggestedTone}</span>
-              </div>
-
-              {/* Word Count */}
-              <div className="mb-4">
-                <span className="text-sm font-medium text-gray-700 block mb-1">Word Count</span>
-                <span className="text-sm text-gray-600">{wordCount.toLocaleString()} words</span>
-              </div>
-
-              {/* Screenshots Count */}
-              {blogData.screenshots && blogData.screenshots.length > 0 && (
-                <div className="mb-4">
-                  <span className="text-sm font-medium text-gray-700 block mb-1">Screenshots</span>
-                  <span className="text-sm text-gray-600">{blogData.screenshots.length} images included</span>
+              {/* Stats Grid */}
+              <div className="grid grid-cols-2 gap-3 mb-6">
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <span className="text-xs font-medium text-gray-500 block mb-1">Target Audience</span>
+                  <span className="text-sm font-semibold text-gray-900">{blogData.contentAnalysis.targetAudience}</span>
                 </div>
-              )}
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <span className="text-xs font-medium text-gray-500 block mb-1">Tone</span>
+                  <span className="text-sm font-semibold text-gray-900 capitalize">{blogData.contentAnalysis.suggestedTone}</span>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <span className="text-xs font-medium text-gray-500 block mb-1">Word Count</span>
+                  <span className="text-sm font-semibold text-gray-900">{wordCount.toLocaleString()}</span>
+                </div>
+                {blogData.screenshots && blogData.screenshots.length > 0 && (
+                  <div className="bg-gray-50 rounded-lg p-3">
+                    <span className="text-xs font-medium text-gray-500 block mb-1">Screenshots</span>
+                    <span className="text-sm font-semibold text-gray-900">{blogData.screenshots.length}</span>
+                  </div>
+                )}
+              </div>
 
               {/* Key Topics */}
               {blogData.contentAnalysis.keyTopics.length > 0 && (
-                <div className="mb-4">
-                  <span className="text-sm font-medium text-gray-700 block mb-2">Key Topics</span>
-                  <div className="flex flex-wrap gap-1">
+                <div className="mb-6">
+                  <span className="text-sm font-medium text-gray-700 block mb-3">Key Topics</span>
+                  <div className="flex flex-wrap gap-2">
                     {blogData.contentAnalysis.keyTopics.map((topic, index) => (
                       <span
                         key={index}
-                        className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-800"
+                        className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 border border-purple-200"
                       >
                         {topic}
                       </span>
@@ -754,70 +841,136 @@ Consider exploring related topics and implementing the strategies discussed to m
               )}
 
               {/* Reasoning */}
-              <div>
-                <span className="text-sm font-medium text-gray-700 block mb-1">AI Reasoning</span>
-                <p className="text-xs text-gray-600">{blogData.contentAnalysis.reasoning}</p>
+              <div className="border-t pt-4">
+                <span className="text-sm font-medium text-gray-700 block mb-2 flex items-center">
+                  <svg className="w-4 h-4 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  AI Insights
+                </span>
+                <p className="text-xs text-gray-600 leading-relaxed bg-gray-50 p-3 rounded-lg">{blogData.contentAnalysis.reasoning}</p>
               </div>
             </div>
           </div>
 
           {/* Main content area */}
           <div className="lg:col-span-3">
-            <div className="bg-white rounded-lg shadow-sm">
+            <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
               {/* Blog post header */}
               {blogData.thumbnail && (
-                <div className="w-full h-48 bg-gray-200 rounded-t-lg overflow-hidden">
+                <div className="relative w-full h-72 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent z-10"></div>
                   <Image
                     src={blogData.thumbnail}
                     alt="Blog post thumbnail"
                     className="w-full h-full object-cover"
-                    width={300}
-                    height={150}
+                    width={1200}
+                    height={600}
                   />
+                  <div className="absolute bottom-0 left-0 right-0 p-8 z-20">
+                    <h2 className="text-3xl font-bold text-white drop-shadow-lg">{blogData.title}</h2>
+                  </div>
                 </div>
               )}
               
               {/* Blog content */}
-              <div className="p-8">
+              <div className="p-10">
                 <div className="prose prose-lg max-w-none">
                   <ReactMarkdown
                     components={{
                       h1: ({ children }) => (
-                        <h1 className="text-3xl font-bold text-gray-900 mb-6">{children}</h1>
+                        <h1 className="text-4xl font-bold text-gray-900 mb-8 leading-tight">{children}</h1>
                       ),
                       h2: ({ children }) => (
-                        <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">{children}</h2>
+                        <h2 className="text-3xl font-bold text-gray-900 mt-10 mb-6 leading-tight flex items-center">
+                          <span className="mr-3 h-1 w-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full"></span>
+                          {children}
+                        </h2>
                       ),
                       h3: ({ children }) => (
-                        <h3 className="text-xl font-semibold text-gray-900 mt-6 mb-3">{children}</h3>
+                        <h3 className="text-2xl font-semibold text-gray-900 mt-8 mb-4">{children}</h3>
                       ),
-                      p: ({ children }) => (
-                        <p className="text-gray-700 mb-4 leading-relaxed">{children}</p>
-                      ),
+                      p: ({ children, node }) => {
+                        // Check if children contains an image or figure element
+                        const containsBlockElement = (children: any): boolean => {
+                          if (!children) return false;
+                          
+                          const childArray = Array.isArray(children) ? children : [children];
+                          
+                          return childArray.some((child: any) => {
+                            // Check for image elements
+                            if (child?.type === 'img' || 
+                                child?.props?.node?.tagName === 'img' ||
+                                child?.type?.name === 'img') {
+                              return true;
+                            }
+                            
+                            // Check for figure elements
+                            if (child?.type === 'figure' || 
+                                child?.props?.node?.tagName === 'figure' ||
+                                child?.type?.name === 'figure') {
+                              return true;
+                            }
+                            
+                            // Recursively check children
+                            if (child?.props?.children) {
+                              return containsBlockElement(child.props.children);
+                            }
+                            
+                            return false;
+                          });
+                        };
+                        
+                        // If it contains block elements, render as div
+                        if (containsBlockElement(children)) {
+                          return <div className="my-6 text-gray-700 leading-relaxed text-lg">{children}</div>;
+                        }
+                        
+                        return <p className="text-gray-700 mb-6 leading-relaxed text-lg">{children}</p>;
+                      },
                       ul: ({ children }) => (
-                        <ul className="list-disc list-inside text-gray-700 mb-4 space-y-1">{children}</ul>
+                        <ul className="list-none text-gray-700 mb-6 space-y-3 ml-2">{children}</ul>
                       ),
                       ol: ({ children }) => (
-                        <ol className="list-decimal list-inside text-gray-700 mb-4 space-y-1">{children}</ol>
+                        <ol className="list-decimal list-inside text-gray-700 mb-6 space-y-3 ml-2">{children}</ol>
                       ),
                       li: ({ children }) => (
-                        <li className="text-gray-700">{children}</li>
+                        <li className="text-gray-700 flex items-start">
+                          <span className="mr-3 mt-1.5 h-2 w-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex-shrink-0"></span>
+                          <span>{children}</span>
+                        </li>
                       ),
                       strong: ({ children }) => (
-                        <strong className="font-semibold text-gray-900">{children}</strong>
+                        <strong className="font-semibold text-gray-900 bg-gradient-to-r from-blue-50 to-indigo-50 px-1 rounded">{children}</strong>
                       ),
                       blockquote: ({ children }) => (
-                        <blockquote className="border-l-4 border-blue-500 pl-4 italic text-gray-600 my-4">
+                        <blockquote className="border-l-4 border-gradient-to-b from-blue-500 to-indigo-600 pl-6 italic text-gray-600 my-8 bg-gradient-to-r from-blue-50 to-indigo-50 py-4 pr-4 rounded-r-lg">
                           {children}
                         </blockquote>
                       ),
                       code: ({ children }) => (
-                        <code className="bg-gray-100 px-1 py-0.5 rounded text-sm font-mono">{children}</code>
+                        <code className="bg-gray-100 px-2 py-1 rounded text-sm font-mono text-indigo-600">{children}</code>
                       ),
                       pre: ({ children }) => (
-                        <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto text-sm font-mono mb-4">
+                        <pre className="bg-gradient-to-br from-gray-900 to-gray-800 text-gray-100 p-6 rounded-xl overflow-x-auto text-sm font-mono mb-6 shadow-xl">
                           {children}
                         </pre>
+                      ),
+                      img: ({ src, alt }) => (
+                        <div className="my-8">
+                          <div className="rounded-xl overflow-hidden shadow-lg">
+                            <img 
+                              src={src || ''} 
+                              alt={alt || 'Screenshot from video'} 
+                              className="w-full h-auto"
+                            />
+                          </div>
+                          {alt && (
+                            <p className="text-center text-sm text-gray-600 mt-2 italic">
+                              {alt}
+                            </p>
+                          )}
+                        </div>
                       ),
                     }}
                   >

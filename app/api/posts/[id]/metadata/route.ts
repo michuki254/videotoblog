@@ -169,18 +169,24 @@ Return valid JSON only with this exact structure:
         if (field) {
           // Individual field regeneration
           if (field === 'urlSlug' && parsedData.urlSlug) {
+            // Update the post with the new URL slug
+            await BlogPost.findByIdAndUpdate(id, { urlSlug: parsedData.urlSlug })
             return NextResponse.json({ 
               field: 'urlSlug',
               value: parsedData.urlSlug,
               generated: true 
             })
           } else if (field === 'metaTitle' && parsedData.metaTitle) {
+            // Update the post with the new meta title
+            await BlogPost.findByIdAndUpdate(id, { metaTitle: parsedData.metaTitle })
             return NextResponse.json({ 
               field: 'metaTitle',
               value: parsedData.metaTitle,
               generated: true 
             })
           } else if (field === 'metaDescription' && parsedData.metaDescription) {
+            // Update the post with the new meta description
+            await BlogPost.findByIdAndUpdate(id, { metaDescription: parsedData.metaDescription })
             return NextResponse.json({ 
               field: 'metaDescription',
               value: parsedData.metaDescription,
@@ -197,6 +203,12 @@ Return valid JSON only with this exact structure:
               metaTitle: parsedData.metaTitle,
               metaDescription: parsedData.metaDescription
             }
+            // Update the post with all metadata fields
+            await BlogPost.findByIdAndUpdate(id, {
+              urlSlug: parsedData.urlSlug,
+              metaTitle: parsedData.metaTitle,
+              metaDescription: parsedData.metaDescription
+            })
           } else {
             throw new Error('Invalid response structure')
           }

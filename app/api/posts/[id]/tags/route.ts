@@ -32,6 +32,15 @@ export async function GET(
       return NextResponse.json({ error: 'Blog post not found' }, { status: 404 })
     }
 
+    // Check if tags already exist in the database
+    if (post.tags && post.tags.length > 0) {
+      console.log('📦 Using stored tags from database')
+      return NextResponse.json({ 
+        tags: post.tags,
+        generated: false 
+      })
+    }
+
     // Generate AI tags using OpenAI
     const prompt = `Analyze this blog post and generate 6-10 relevant, specific tags that capture the main topics, themes, and key concepts. The tags should be useful for categorization and discovery.
 
@@ -90,6 +99,10 @@ Return only a JSON array of strings, no additional text:
       // Fallback if no response
       aiTags = post.contentAnalysis.keyTopics || ['Content', 'Video', 'Analysis']
     }
+
+    // Save the generated tags back to the database
+    await BlogPost.findByIdAndUpdate(id, { tags: aiTags })
+    console.log('✅ Tags saved to database for post:', id)
 
     return NextResponse.json({ 
       tags: aiTags,

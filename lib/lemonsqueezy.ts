@@ -68,6 +68,24 @@ export const SUBSCRIPTION_PLANS = {
       maxVideoDuration: 7200, // 2 hours
       storageGB: 50,
     }
+  },
+  ENTERPRISE: {
+    name: 'Enterprise',
+    price: 99.99,
+    variantId: process.env.LEMONSQUEEZY_ENTERPRISE_VARIANT_ID!,
+    features: [
+      'Unlimited video conversions',
+      'Advanced AI with custom models',
+      'All platform integrations',
+      'Custom branding & templates',
+      'Dedicated account manager',
+      'Advanced analytics & reporting'
+    ],
+    limits: {
+      videosPerMonth: -1, // Unlimited
+      maxVideoDuration: -1, // Unlimited
+      storageGB: -1, // Unlimited
+    }
   }
 }
 
@@ -80,6 +98,15 @@ export async function createSubscriptionCheckout(
   customData?: Record<string, any>
 ) {
   try {
+    // Validate required environment variables
+    if (!process.env.LEMONSQUEEZY_STORE_ID) {
+      throw new Error('LEMONSQUEEZY_STORE_ID is not configured')
+    }
+    
+    if (!variantId) {
+      throw new Error('Variant ID is required')
+    }
+    
     console.log('LemonSqueezy checkout params:', {
       storeId: process.env.LEMONSQUEEZY_STORE_ID,
       variantId,
@@ -114,7 +141,15 @@ export async function createSubscriptionCheckout(
     )
 
     console.log('LemonSqueezy response:', JSON.stringify(checkout, null, 2))
-    return checkout.data
+    
+    // Check if we have a valid response structure
+    // The checkout object has statusCode and data properties, and the actual checkout data is in data.data
+    if (!checkout || !checkout.data?.data?.attributes?.url) {
+      console.error('Invalid checkout response structure:', checkout)
+      throw new Error('Invalid response from LemonSqueezy')
+    }
+    
+    return checkout.data.data
   } catch (error: any) {
     console.error('Error creating checkout - Full error:', error)
     console.error('Error message:', error?.message)
@@ -123,7 +158,7 @@ export async function createSubscriptionCheckout(
       console.error('Error response:', error.response.data)
       console.error('Error status:', error.response.status)
     }
-    throw new Error(`Failed to create checkout session: ${error?.message || 'Unknown error'}`)
+    throw error
   }
 }
 
@@ -220,6 +255,7 @@ export function canPerformAction(
 
   switch (action) {
     case 'convert_video':
+      // Unlimited check
       if (planLimits.videosPerMonth === -1) return { allowed: true }
       
       const videosUsed = currentUsage?.videosThisMonth || 0

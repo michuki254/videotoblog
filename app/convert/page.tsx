@@ -15,7 +15,7 @@ export default function ConvertPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [detailLevel, setDetailLevel] = useState('comprehensive');
-  const [wordCount, setWordCount] = useState(2000);
+  const [wordCount, setWordCount] = useState(700);
   const [includeScreenshots, setIncludeScreenshots] = useState<'none' | 'auto' | 'custom'>('auto');
   const [screenshotCount, setScreenshotCount] = useState(3);
   const [customTimestamps, setCustomTimestamps] = useState('30, 60, 90');
@@ -103,7 +103,7 @@ export default function ConvertPage() {
     const settings = template.settings;
     setPrimaryKeyphrase(settings.primaryKeyphrase || '');
     setDetailLevel(settings.detailLevel || 'comprehensive');
-    setWordCount(settings.wordCount || 2000);
+    setWordCount(settings.wordCount || 700);
     setIncludeScreenshots(settings.includeScreenshots || 'auto');
     setScreenshotCount(settings.screenshotCount || 3);
     setCustomTimestamps(settings.customTimestamps || '30, 60, 90');
@@ -140,7 +140,18 @@ export default function ConvertPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!url) return;
+    console.log('Form submitted with URL:', url);
+    
+    if (!url) {
+      console.log('No URL provided, returning');
+      return;
+    }
+    
+    // Prevent double submission
+    if (isLoading) {
+      console.log('Already loading, preventing double submission');
+      return;
+    }
 
     setIsLoading(true);
     setError('');
@@ -179,8 +190,8 @@ export default function ConvertPage() {
           url,
         primaryKeyphrase,
         timestamps,
-        seo: (document.getElementById('seo') as HTMLInputElement)?.checked,
-        headlines: (document.getElementById('headlines') as HTMLInputElement)?.checked,
+        seo: (document.getElementById('seo') as HTMLInputElement)?.checked ?? true,
+        headlines: (document.getElementById('headlines') as HTMLInputElement)?.checked ?? true,
         tableOfContents: addTableOfContents,
         detailLevel,
         wordCount,
@@ -202,15 +213,19 @@ export default function ConvertPage() {
         customInstructions
       };
 
+      console.log('Storing conversion data:', conversionData);
       sessionStorage.setItem('pendingConversion', JSON.stringify(conversionData));
 
       // Redirect to preview page immediately - it will handle the conversion with progress bar
-      router.push('/preview');
+      console.log('Redirecting to preview page...');
+      
+      // Force navigation using window.location for reliability
+      window.location.href = '/preview';
     } catch (err: unknown) {
+      console.error('Error in handleSubmit:', err);
       const errorMessage = err instanceof Error ? err.message : 'An error occurred';
       setError(errorMessage);
-    } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Only set to false on error
     }
   }
 
@@ -229,21 +244,21 @@ export default function ConvertPage() {
     icon?: React.ReactNode;
     description?: string;
   }) => (
-    <div className="border border-gray-200 rounded-lg bg-white">
+    <div className="border border-gray-200 rounded-xl bg-white overflow-hidden transition-all duration-300 hover:shadow-lg">
       <button
         type="button"
         onClick={onToggle}
-        className="w-full px-4 py-4 text-left flex items-center justify-between hover:bg-gray-50 transition-colors rounded-lg"
+        className="w-full px-6 py-5 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
       >
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-4">
           {icon && <div className="text-indigo-600">{icon}</div>}
           <div>
-            <h3 className="text-lg font-medium text-gray-900">{title}</h3>
+            <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
             {description && <p className="text-sm text-gray-500 mt-1">{description}</p>}
           </div>
         </div>
         <svg
-          className={`h-5 w-5 text-gray-400 transform transition-transform ${
+          className={`h-5 w-5 text-gray-400 transform transition-transform duration-300 ${
             isOpen ? 'rotate-180' : ''
           }`}
           fill="none"
@@ -253,698 +268,610 @@ export default function ConvertPage() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
-      {isOpen && (
-        <div className="px-4 pb-4 border-t border-gray-100">
-          <div className="pt-4">
+      <div className={`transition-all duration-300 ${isOpen ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
+        <div className="px-6 pb-6 border-t border-gray-100">
+          <div className="pt-6">
             {children}
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 
   return (
     <DashboardLayout>
-      <div className="py-8">
-        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-          <div className="bg-white shadow-lg rounded-xl overflow-hidden">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-8">
-              <h1 className="text-3xl font-bold text-white mb-2">
-                  Convert Video to Blog Post
-                </h1>
-              <p className="text-indigo-100">
-                Transform your YouTube videos into SEO-optimized, engaging blog content with AI
-              </p>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-indigo-50">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-12">
+          
+          {/* Hero Section */}
+          <div className="text-center mb-12 animate-fade-in">
+            <div className="inline-flex items-center justify-center p-2 bg-indigo-100 rounded-full mb-4">
+              <svg className="h-8 w-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
             </div>
+            <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4">
+              <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                Transform Videos into Engaging Blog Posts
+              </span>
+            </h1>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Powered by advanced AI to create SEO-optimized, compelling content from any YouTube video
+            </p>
+          </div>
 
-            <div className="p-6">
-              {/* Success Banner */}
-              <div className="mb-6 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-4">
-                  <div className="flex items-start">
-                    <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.236 4.53L8.53 10.96a.75.75 0 00-1.06 1.061l2.03 2.03a.75.75 0 001.137-.089l3.857-5.481z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                    <div className="ml-3">
-                    <h3 className="text-sm font-semibold text-green-800">🚀 AI-Powered Blog Generation</h3>
-                    <div className="mt-2 text-sm text-green-700">
-                      <p>Intelligent content detection, smart screenshot placement, comprehensive SEO optimization, and flexible writing styles to create engaging blog posts from any YouTube video.</p>
-                    </div>
+          {/* Main Form Card */}
+          <div className="bg-white shadow-2xl rounded-2xl overflow-hidden transform transition-all duration-500 hover:shadow-3xl">
+            
+            {/* Quick Actions Bar */}
+            <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-6">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center space-x-3">
+                  <div className="bg-white/20 backdrop-blur-sm rounded-lg p-2">
+                    <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                  <div className="text-white">
+                    <h2 className="text-lg font-semibold">Quick Convert</h2>
+                    <p className="text-sm text-indigo-100">Start with just a URL</p>
                   </div>
                 </div>
-              </div>
-              
-              {/* Template Management Section */}
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h3 className="text-sm font-semibold text-blue-800">📋 Template Manager</h3>
-                    <p className="text-xs text-blue-600 mt-1">Save and reuse your conversion settings</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowTemplateManager(!showTemplateManager)}
-                    className="text-xs text-blue-600 hover:text-blue-800 underline"
-                  >
-                    {showTemplateManager ? 'Hide' : 'Manage Templates'}
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {/* Template Selector */}
-                  <div>
-                    <label htmlFor="templateSelector" className="block text-xs font-medium text-gray-700 mb-1">
-                      Load Template
-                    </label>
+                
+                {/* Template Quick Actions */}
+                <div className="flex items-center space-x-2">
+                  {templates.length > 0 && (
                     <select
-                      id="templateSelector"
                       value={selectedTemplate}
                       onChange={(e) => {
                         if (e.target.value) {
                           loadTemplate(e.target.value);
                         }
                       }}
-                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                      className="bg-white/20 backdrop-blur-sm text-white placeholder-indigo-200 border border-white/30 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/50"
                     >
-                      <option value="">Select a template...</option>
+                      <option value="" className="text-gray-800">Select Template...</option>
                       {templates.map((template) => (
-                        <option key={template.id} value={template.id}>
+                        <option key={template.id} value={template.id} className="text-gray-800">
                           {template.name}
                         </option>
                       ))}
                     </select>
-                  </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setShowTemplateManager(!showTemplateManager)}
+                    className="bg-white/20 backdrop-blur-sm text-white border border-white/30 rounded-lg px-4 py-2 text-sm hover:bg-white/30 transition-colors"
+                  >
+                    Templates
+                  </button>
+                </div>
+              </div>
+            </div>
 
-                  {/* Save Template Button */}
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">
-                      Save Current Settings
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => setShowSaveTemplate(true)}
-                      className="w-full px-3 py-2 text-sm font-medium text-blue-700 bg-blue-100 border border-blue-300 rounded-md hover:bg-blue-200 transition-colors"
-                    >
-                      💾 Save as Template
-                    </button>
-                  </div>
-
-                  {/* Quick Actions */}
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">
-                      Quick Actions
-                    </label>
-                    <div className="flex space-x-1">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          // Reset to defaults
-                          setPrimaryKeyphrase('');
-                          setDetailLevel('comprehensive');
-                          setWordCount(2000);
-                          setIncludeScreenshots('auto');
-                          setScreenshotCount(3);
-                          setCustomTimestamps('30, 60, 90');
-                          setIncludeFeaturedImage(true);
-                          setTone('auto');
-                          setPointOfView('auto');
-                          setUseEmojis(false);
-                          setFormat('auto');
-                          setUseChaptersAsOutline(false);
-                          setAddTableOfContents(true);
-                          setAddFAQs(false);
-                          setAddVideoAttribution(false);
-                          setAddCTA(false);
-                          setSelectedTemplate('');
-                        }}
-                        className="flex-1 px-2 py-2 text-xs font-medium text-gray-600 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 transition-colors"
-                      >
-                        🔄 Reset
-                      </button>
-                      {selectedTemplate && (
-                        <button
-                          type="button"
-                          onClick={() => deleteTemplate(selectedTemplate)}
-                          className="px-2 py-2 text-xs font-medium text-red-600 bg-red-100 border border-red-300 rounded-md hover:bg-red-200 transition-colors"
-                        >
-                          🗑️
-                        </button>
-                      )}
+            <form onSubmit={handleSubmit} className="p-8 space-y-8">
+              
+              {/* Primary Input Section */}
+              <div className="space-y-6">
+                <div className="group">
+                  <label htmlFor="url" className="block text-sm font-semibold text-gray-900 mb-3">
+                    YouTube Video URL
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                      <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                        <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                      </svg>
                     </div>
+                    <input
+                      type="url"
+                      name="url"
+                      id="url"
+                      required
+                      className="block w-full pl-12 pr-4 py-4 border-2 border-gray-300 rounded-xl text-gray-900 bg-gray-50 placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                      placeholder="https://www.youtube.com/watch?v=..."
+                      value={url}
+                      onChange={(e) => setUrl(e.target.value)}
+                    />
                   </div>
                 </div>
 
-                {/* Template Manager */}
-                {showTemplateManager && (
-                  <div className="mt-4 pt-4 border-t border-blue-200">
-                    <h4 className="text-sm font-medium text-gray-700 mb-3">Saved Templates</h4>
-                    {templates.length === 0 ? (
-                      <p className="text-xs text-gray-500 italic">No templates saved yet. Save your first template above!</p>
-                    ) : (
-                      <div className="space-y-2">
-                        {templates.map((template) => (
-                          <div key={template.id} className="flex items-center justify-between p-2 bg-white rounded border">
-                            <div>
-                              <span className="text-sm font-medium text-gray-900">{template.name}</span>
-                              <p className="text-xs text-gray-500">
-                                Created {new Date(template.createdAt).toLocaleDateString()}
-                              </p>
-                            </div>
-                            <div className="flex space-x-2">
-                              <button
-                                type="button"
-                                onClick={() => loadTemplate(template.id)}
-                                className="px-2 py-1 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100 transition-colors"
-                              >
-                                Load
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => deleteTemplate(template.id)}
-                                className="px-2 py-1 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded hover:bg-red-100 transition-colors"
-                              >
-                                Delete
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                <div className="group">
+                  <label htmlFor="primaryKeyphrase" className="block text-sm font-semibold text-gray-900 mb-3">
+                    SEO Focus Keyphrase
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                      <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <input
+                      type="text"
+                      name="primaryKeyphrase"
+                      id="primaryKeyphrase"
+                      className="block w-full pl-12 pr-4 py-4 border-2 border-gray-300 rounded-xl text-gray-900 bg-gray-50 placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                      placeholder="e.g., machine learning tutorial, react hooks guide"
+                      value={primaryKeyphrase}
+                      onChange={(e) => setPrimaryKeyphrase(e.target.value)}
+                    />
                   </div>
-                )}
+                  <p className="mt-2 text-sm text-gray-500">
+                    Optional: Target keyphrase for SEO optimization
+                  </p>
+                </div>
               </div>
 
-              {/* Save Template Modal */}
-              {showSaveTemplate && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                  <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Save Template</h3>
-                    <div className="mb-4">
-                      <label htmlFor="templateName" className="block text-sm font-medium text-gray-700 mb-2">
-                        Template Name
-                      </label>
+              {/* Quick Settings Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-gray-50 rounded-xl p-6 hover:shadow-md transition-shadow">
+                  <label className="block text-sm font-semibold text-gray-900 mb-3">
+                    Content Depth
+                  </label>
+                  <select
+                    value={detailLevel}
+                    onChange={(e) => setDetailLevel(e.target.value)}
+                    className="w-full rounded-lg border-gray-300 bg-white text-gray-900"
+                  >
+                    <option value="basic">Basic Overview</option>
+                    <option value="comprehensive">Comprehensive</option>
+                    <option value="expert">Expert Analysis</option>
+                  </select>
+                </div>
+
+                <div className="bg-gray-50 rounded-xl p-6 hover:shadow-md transition-shadow">
+                  <label className="block text-sm font-semibold text-gray-900 mb-3">
+                    Target Length
+                  </label>
+                  <select
+                    value={wordCount}
+                    onChange={(e) => setWordCount(parseInt(e.target.value))}
+                    className="w-full rounded-lg border-gray-300 bg-white text-gray-900"
+                  >
+                    <option value="400">~400 words</option>
+                    <option value="700">~700 words</option>
+                    <option value="1000">~1,000 words</option>
+                    <option value="1500">~1,500 words</option>
+                    <option value="2000">~2,000 words</option>
+                    <option value="3000">~3,000 words</option>
+                  </select>
+                </div>
+
+                <div className="bg-gray-50 rounded-xl p-6 hover:shadow-md transition-shadow">
+                  <label className="block text-sm font-semibold text-gray-900 mb-3">
+                    Quick Options
+                  </label>
+                  <div className="space-y-3">
+                    <label className="flex items-center cursor-pointer">
                       <input
-                        type="text"
-                        id="templateName"
-                        value={newTemplateName}
-                        onChange={(e) => setNewTemplateName(e.target.value)}
-                        placeholder="e.g. Tutorial Videos, Product Reviews"
-                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                        id="seo"
+                        type="checkbox"
+                        defaultChecked
+                        className="h-4 w-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"
                       />
-                    </div>
-                    <div className="flex justify-end space-x-3">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowSaveTemplate(false);
-                          setNewTemplateName('');
-                        }}
-                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="button"
-                        onClick={saveAsTemplate}
-                        disabled={!newTemplateName.trim()}
-                        className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        Save Template
-                      </button>
-                    </div>
+                      <span className="ml-2 text-sm text-gray-700">SEO Optimization</span>
+                    </label>
+                    <label className="flex items-center cursor-pointer">
+                      <input
+                        id="headlines"
+                        type="checkbox"
+                        defaultChecked
+                        className="h-4 w-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"
+                      />
+                      <span className="ml-2 text-sm text-gray-700">Smart Headlines</span>
+                    </label>
                   </div>
                 </div>
-              )}
+              </div>
+
+              {/* Advanced Options Sections */}
+              <div className="space-y-4">
                 
-              {/* Main Form */}
-                <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Basic Information */}
-                <div className="space-y-6">
-                  <div>
-                    <label htmlFor="url" className="block text-sm font-semibold leading-6 text-gray-900 mb-2">
-                      YouTube URL *
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="url"
-                        name="url"
-                        id="url"
-                        required
-                        className="block w-full rounded-lg border-0 py-3 pl-4 pr-12 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                        placeholder="https://www.youtube.com/watch?v=..."
-                        value={url}
-                        onChange={(e) => setUrl(e.target.value)}
-                      />
-                      <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                        <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h1m4 0h1m6-4a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label htmlFor="primaryKeyphrase" className="block text-sm font-semibold leading-6 text-gray-900 mb-2">
-                      Primary SEO Keyphrase (Optional)
-                    </label>
-                    <div className="relative">
-                          <input
-                        type="text"
-                        name="primaryKeyphrase"
-                        id="primaryKeyphrase"
-                        className="block w-full rounded-lg border-0 py-3 pl-4 pr-12 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                        placeholder="e.g. React hooks, digital marketing, machine learning"
-                        value={primaryKeyphrase}
-                        onChange={(e) => setPrimaryKeyphrase(e.target.value)}
-                      />
-                      <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                        <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                        </svg>
-                      </div>
-                    </div>
-                    <p className="mt-2 text-sm text-gray-600">
-                      🎯 Enter your target keyphrase to optimize the blog content for search engines. The AI will strategically incorporate this throughout the content.
-                    </p>
-                        </div>
-
-                  {/* Custom Instructions */}
-                  <div>
-                    <label htmlFor="customInstructions" className="block text-sm font-semibold leading-6 text-gray-900 mb-2">
-                      Custom Instructions (Optional)
-                          </label>
-                    <div className="relative">
-                      <textarea
-                        name="customInstructions"
-                        id="customInstructions"
-                        rows={4}
-                        className="block w-full rounded-lg border-0 py-3 pl-4 pr-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 resize-vertical"
-                        placeholder="e.g. Focus on beginner-friendly explanations, include practical examples, avoid technical jargon, emphasize actionable tips, etc."
-                        value={customInstructions}
-                        onChange={(e) => setCustomInstructions(e.target.value)}
-                      />
-                      <div className="absolute top-3 right-3">
-                        <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                      </div>
-                    </div>
-                    <p className="mt-2 text-sm text-gray-600">
-                      📝 Provide specific instructions to guide the AI in generating your blog post. Be as detailed as you want about style, focus areas, target audience, or special requirements.
-                    </p>
-                    {customInstructions.length > 0 && (
-                      <p className="mt-1 text-xs text-gray-500">
-                        {customInstructions.length} characters • The AI will incorporate these instructions into the blog generation
-                      </p>
-                    )}
-                    </div>
-
-                  {/* Quick Settings Row */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {/* Writing Style */}
+                <CollapsibleSection
+                  title="Writing Style & Tone"
+                  description="Customize how your blog post reads"
+                  isOpen={showWritingStyle}
+                  onToggle={() => setShowWritingStyle(!showWritingStyle)}
+                  icon={
+                    <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                  }
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label htmlFor="detailLevel" className="block text-sm font-medium text-gray-700 mb-2">
-                        Detail Level
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Writing Tone
                       </label>
                       <select
-                        id="detailLevel"
-                        name="detailLevel"
-                        value={detailLevel}
-                        onChange={(e) => setDetailLevel(e.target.value)}
-                        className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                        value={tone}
+                        onChange={(e) => setTone(e.target.value)}
+                        className="w-full rounded-lg border-gray-300 bg-white text-gray-900"
                       >
-                        <option value="basic">Basic (shorter)</option>
-                        <option value="comprehensive">Comprehensive</option>
-                        <option value="expert">Expert (in-depth)</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label htmlFor="wordCount" className="block text-sm font-medium text-gray-700 mb-2">
-                        Target Word Count
-                      </label>
-                      <select
-                        id="wordCount"
-                        name="wordCount"
-                        value={wordCount}
-                        onChange={(e) => setWordCount(parseInt(e.target.value))}
-                        className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      >
-                        <option value="1000">~1000 words</option>
-                        <option value="1500">~1500 words</option>
-                        <option value="2000">~2000 words</option>
-                        <option value="3000">~3000 words</option>
-                        <option value="4000">~4000 words</option>
+                        <option value="auto">Auto-detect</option>
+                        <option value="professional">Professional</option>
+                        <option value="conversational">Conversational</option>
+                        <option value="friendly">Friendly</option>
+                        <option value="formal">Formal</option>
                       </select>
                     </div>
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Basic Options
+                        Point of View
                       </label>
-                      <div className="space-y-2">
-                        <div className="flex items-center">
-                          <input
-                            id="seo"
-                            name="seo"
-                            type="checkbox"
-                            defaultChecked
-                            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
-                          />
-                          <label htmlFor="seo" className="ml-2 text-sm text-gray-700">SEO Optimization</label>
-                        </div>
-                        <div className="flex items-center">
-                          <input
-                            id="headlines"
-                            name="headlines"
-                            type="checkbox"
-                            defaultChecked
-                            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
-                          />
-                          <label htmlFor="headlines" className="ml-2 text-sm text-gray-700">Auto Headlines</label>
-                        </div>
-                      </div>
+                      <select
+                        value={pointOfView}
+                        onChange={(e) => setPointOfView(e.target.value)}
+                        className="w-full rounded-lg border-gray-300 bg-white text-gray-900"
+                      >
+                        <option value="auto">Auto-detect</option>
+                        <option value="first-person">First Person</option>
+                        <option value="second-person">Second Person</option>
+                        <option value="third-person">Third Person</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Content Format
+                      </label>
+                      <select
+                        value={format}
+                        onChange={(e) => setFormat(e.target.value)}
+                        className="w-full rounded-lg border-gray-300 bg-white text-gray-900"
+                      >
+                        <option value="auto">Auto-detect</option>
+                        <option value="article">Article</option>
+                        <option value="tutorial">Tutorial</option>
+                        <option value="guide">Guide</option>
+                        <option value="review">Review</option>
+                      </select>
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                      <label className="text-sm font-medium text-gray-700">
+                        Include Emojis
+                      </label>
+                      <button
+                        type="button"
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                          useEmojis ? 'bg-indigo-600' : 'bg-gray-300'
+                        }`}
+                        onClick={() => setUseEmojis(!useEmojis)}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            useEmojis ? 'translate-x-6' : 'translate-x-1'
+                          }`}
+                        />
+                      </button>
                     </div>
                   </div>
-                </div>
 
-                {/* Collapsible Sections */}
-                <div className="space-y-4">
-                  {/* Writing Style Section */}
-                  <CollapsibleSection
-                    title="Writing Style"
-                    description="Customize tone, format, and content structure"
-                    isOpen={showWritingStyle}
-                    onToggle={() => setShowWritingStyle(!showWritingStyle)}
-                    icon={
-                      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                              </svg>
-                    }
-                  >
-                    <div className="space-y-6">
-                      {/* Style Options */}
-                      <div>
-                        <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">Style Preferences</h4>
-                        
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                          {/* Tone */}
-                          <div>
-                            <label htmlFor="tone" className="block text-sm font-medium text-gray-700 mb-2">
-                              Tone
-                            </label>
-                            <select
-                              id="tone"
-                              name="tone"
-                              value={tone}
-                              onChange={(e) => setTone(e.target.value)}
-                              className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                            >
-                              <option value="auto">🔥 Auto</option>
-                              <option value="professional">Professional</option>
-                              <option value="conversational">Conversational</option>
-                              <option value="friendly">Friendly</option>
-                              <option value="formal">Formal</option>
-                              <option value="casual">Casual</option>
-                              <option value="enthusiastic">Enthusiastic</option>
-                            </select>
-                          </div>
-
-                          {/* Point of View */}
-                          <div>
-                            <label htmlFor="pointOfView" className="block text-sm font-medium text-gray-700 mb-2">
-                              Point of View
-                            </label>
-                            <select
-                              id="pointOfView"
-                              name="pointOfView"
-                              value={pointOfView}
-                              onChange={(e) => setPointOfView(e.target.value)}
-                              className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                            >
-                              <option value="auto">🔥 Auto</option>
-                              <option value="first-person">First Person (I, we)</option>
-                              <option value="second-person">Second Person (You)</option>
-                              <option value="third-person">Third Person (They, it)</option>
-                            </select>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                          {/* Format */}
-                          <div>
-                            <label htmlFor="format" className="block text-sm font-medium text-gray-700 mb-2">
-                              Content Format
-                            </label>
-                            <select
-                              id="format"
-                              name="format"
-                              value={format}
-                              onChange={(e) => setFormat(e.target.value)}
-                              className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                            >
-                              <option value="auto">🔥 Auto</option>
-                              <option value="article">Article</option>
-                              <option value="tutorial">Tutorial</option>
-                              <option value="listicle">Listicle</option>
-                              <option value="guide">Guide</option>
-                              <option value="review">Review</option>
-                              <option value="how-to">How-to</option>
-                            </select>
-                          </div>
-
-                          {/* Use Emojis */}
-                          <div className="flex items-center justify-between h-full pt-6">
-                            <label htmlFor="useEmojis" className="text-sm font-medium text-gray-700">
-                              Use Emojis
-                            </label>
-                            <button
-                              type="button"
-                              className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 ${
-                                useEmojis ? 'bg-indigo-600' : 'bg-gray-200'
+                  {/* Content Structure Options */}
+                  <div className="mt-6 pt-6 border-t border-gray-200">
+                    <h4 className="text-sm font-semibold text-gray-900 mb-4">Content Structure</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {[
+                        { id: 'addTableOfContents', label: 'Table of Contents', state: addTableOfContents, setState: setAddTableOfContents },
+                        { id: 'useChaptersAsOutline', label: 'Use Video Chapters', state: useChaptersAsOutline, setState: setUseChaptersAsOutline },
+                        { id: 'addFAQs', label: 'Include FAQs', state: addFAQs, setState: setAddFAQs },
+                        { id: 'addVideoAttribution', label: 'Video Attribution', state: addVideoAttribution, setState: setAddVideoAttribution },
+                        { id: 'addCTA', label: 'Call-to-Action', state: addCTA, setState: setAddCTA }
+                      ].map((option) => (
+                        <div key={option.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <label className="text-sm font-medium text-gray-700">
+                            {option.label}
+                          </label>
+                          <button
+                            type="button"
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                              option.state ? 'bg-indigo-600' : 'bg-gray-300'
+                            }`}
+                            onClick={() => option.setState(!option.state)}
+                          >
+                            <span
+                              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                option.state ? 'translate-x-6' : 'translate-x-1'
                               }`}
-                              onClick={() => setUseEmojis(!useEmojis)}
-                            >
-                              <span
-                                className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition duration-200 ease-in-out ${
-                                  useEmojis ? 'translate-x-5' : 'translate-x-0'
-                                }`}
-                              />
-                            </button>
-                          </div>
+                            />
+                          </button>
                         </div>
-                              </div>
-
-                      {/* Structure Options */}
-                      <div className="border-t border-gray-100 pt-4">
-                        <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">Content Structure</h4>
-                        
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          {[
-                            { id: 'useChaptersAsOutline', label: 'Use Video Chapters', state: useChaptersAsOutline, setState: setUseChaptersAsOutline },
-                            { id: 'addTableOfContents', label: 'Table of Contents', state: addTableOfContents, setState: setAddTableOfContents },
-                            { id: 'addFAQs', label: 'Include FAQs', state: addFAQs, setState: setAddFAQs },
-                            { id: 'addVideoAttribution', label: 'Video Attribution', state: addVideoAttribution, setState: setAddVideoAttribution },
-                            { id: 'addCTA', label: 'Call-to-Action', state: addCTA, setState: setAddCTA }
-                          ].map((option, index) => (
-                            <div key={option.id} className={`flex items-center justify-between p-3 bg-gray-50 rounded-lg ${index >= 4 ? 'sm:col-span-2' : ''}`}>
-                              <label htmlFor={option.id} className="text-sm font-medium text-gray-700">
-                                {option.label}
-                              </label>
-                              <button
-                                type="button"
-                                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 ${
-                                  option.state ? 'bg-indigo-600' : 'bg-gray-300'
-                                }`}
-                                onClick={() => option.setState(!option.state)}
-                              >
-                                <span
-                                  className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition duration-200 ease-in-out ${
-                                    option.state ? 'translate-x-5' : 'translate-x-0'
-                                  }`}
-                                />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
+                      ))}
                     </div>
-                  </CollapsibleSection>
+                  </div>
+                </CollapsibleSection>
 
-                  {/* Screenshot Options */}
-                  <CollapsibleSection
-                    title="Screenshot & Media Options"
-                    description="Configure visual content and images"
-                    isOpen={showScreenshotOptions}
-                    onToggle={() => setShowScreenshotOptions(!showScreenshotOptions)}
-                    icon={
-                      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    }
-                  >
-                    <div className="space-y-6">
-                      {/* Screenshot Mode Selection */}
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-3">
-                          Screenshot Mode
-                        </label>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                          {[
-                            { value: 'none', label: 'No Screenshots', icon: '🚫', desc: 'Text-only content' },
-                            { value: 'auto', label: 'Auto Screenshots', icon: '🤖', desc: 'AI-placed visuals' },
-                            { value: 'custom', label: 'Custom Times', icon: '⚙️', desc: 'Specify timestamps' }
-                          ].map((mode) => (
-                            <div
-                              key={mode.value}
-                              className={`relative rounded-lg border-2 cursor-pointer transition-all duration-200 p-4 ${
-                                includeScreenshots === mode.value 
-                              ? 'border-indigo-600 bg-indigo-50' 
-                              : 'border-gray-300 hover:border-gray-400'
-                          }`}
-                              onClick={() => setIncludeScreenshots(mode.value as 'none' | 'auto' | 'custom')}
-                        >
-                              <div className="text-center">
-                                <div className="text-2xl mb-2">{mode.icon}</div>
-                                <h3 className="text-sm font-medium text-gray-900">{mode.label}</h3>
-                                <p className="text-xs text-gray-500 mt-1">{mode.desc}</p>
-                            </div>
-                              {includeScreenshots === mode.value && (
-                            <div className="absolute top-2 right-2">
-                                  <div className="flex items-center justify-center w-5 h-5 bg-indigo-600 rounded-full">
-                                    <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                </svg>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                          ))}
+                {/* Screenshot Options */}
+                <CollapsibleSection
+                  title="Visual Content"
+                  description="Configure screenshots and images"
+                  isOpen={showScreenshotOptions}
+                  onToggle={() => setShowScreenshotOptions(!showScreenshotOptions)}
+                  icon={
+                    <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  }
+                >
+                  <div className="space-y-6">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-4">
+                        Screenshot Generation
+                      </label>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        {[
+                          { value: 'none', label: 'No Screenshots', icon: '❌', desc: 'Text only' },
+                          { value: 'auto', label: 'Auto Generate', icon: '🤖', desc: 'AI-placed' },
+                          { value: 'custom', label: 'Custom Times', icon: '⚙️', desc: 'Set timestamps' }
+                        ].map((mode) => (
+                          <button
+                            key={mode.value}
+                            type="button"
+                            className={`relative p-4 rounded-xl border-2 transition-all ${
+                              includeScreenshots === mode.value 
+                                ? 'border-indigo-600 bg-indigo-50' 
+                                : 'border-gray-300 hover:border-gray-400'
+                            }`}
+                            onClick={() => setIncludeScreenshots(mode.value as 'none' | 'auto' | 'custom')}
+                          >
+                            <div className="text-2xl mb-2">{mode.icon}</div>
+                            <h4 className="text-sm font-medium text-gray-900">{mode.label}</h4>
+                            <p className="text-xs text-gray-500 mt-1">{mode.desc}</p>
+                          </button>
+                        ))}
                       </div>
                     </div>
 
-                    {/* Screenshot Count - Only show when auto screenshots selected */}
                     {includeScreenshots === 'auto' && (
-                        <div>
-                          <label htmlFor="screenshotCount" className="block text-sm font-medium text-gray-700 mb-2">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
                           Number of Screenshots
                         </label>
-                        <select
-                          id="screenshotCount"
-                          name="screenshotCount"
+                        <input
+                          type="range"
+                          min="1"
+                          max="10"
                           value={screenshotCount}
                           onChange={(e) => setScreenshotCount(parseInt(e.target.value))}
-                            className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                        >
-                            {[1, 2, 3, 4, 5, 6, 8, 10].map(num => (
-                              <option key={num} value={num}>{num} screenshot{num > 1 ? 's' : ''}</option>
-                            ))}
-                        </select>
-                        <p className="mt-1 text-xs text-gray-500">
-                          Screenshots will be automatically spaced throughout the video.
-                        </p>
+                          className="w-full accent-indigo-600"
+                        />
+                        <div className="flex justify-between text-xs text-gray-500 mt-1">
+                          <span>1</span>
+                          <span className="font-medium text-indigo-600">{screenshotCount} screenshots</span>
+                          <span>10</span>
+                        </div>
                       </div>
                     )}
 
-                    {/* Custom Timestamps - Only show when custom screenshots selected */}
                     {includeScreenshots === 'custom' && (
-                        <div>
-                          <label htmlFor="customTimestamps" className="block text-sm font-medium text-gray-700 mb-2">
-                          Custom Screenshot Timestamps
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Timestamp List (seconds)
                         </label>
-                          <input
-                            type="text"
-                            name="customTimestamps"
-                            id="customTimestamps"
-                            value={customTimestamps}
-                            onChange={(e) => setCustomTimestamps(e.target.value)}
-                            placeholder="30, 60, 90, 120"
-                            className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                          />
-                          <p className="mt-1 text-xs text-gray-500">
-                            Enter timestamps in seconds, separated by commas (e.g., 30, 60, 90)
-                          </p>
-                        </div>
-                      )}
-
-                      {/* Featured Image Option */}
-                      <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div>
-                          <label htmlFor="featuredImage" className="text-sm font-medium text-gray-700">
-                            Include Featured Image
-                          </label>
-                          <p className="text-xs text-gray-500">Add video thumbnail as the main featured image</p>
-                        </div>
-                        <button
-                          type="button"
-                          className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 ${
-                            includeFeaturedImage ? 'bg-indigo-600' : 'bg-gray-300'
-                          }`}
-                          onClick={() => setIncludeFeaturedImage(!includeFeaturedImage)}
-                        >
-                          <span
-                            className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition duration-200 ease-in-out ${
-                              includeFeaturedImage ? 'translate-x-5' : 'translate-x-0'
-                            }`}
-                          />
-                        </button>
+                        <input
+                          type="text"
+                          value={customTimestamps}
+                          onChange={(e) => setCustomTimestamps(e.target.value)}
+                          placeholder="30, 60, 90, 120"
+                          className="w-full rounded-lg border-gray-300 bg-white"
+                        />
                       </div>
-                    </div>
-                  </CollapsibleSection>
-                  </div>
+                    )}
 
-                  {/* Submit Button */}
-                <div className="pt-6 border-t border-gray-200">
+                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                      <div>
+                        <label className="text-sm font-medium text-gray-700">
+                          Featured Image
+                        </label>
+                        <p className="text-xs text-gray-500">Use video thumbnail as hero image</p>
+                      </div>
+                      <button
+                        type="button"
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                          includeFeaturedImage ? 'bg-indigo-600' : 'bg-gray-300'
+                        }`}
+                        onClick={() => setIncludeFeaturedImage(!includeFeaturedImage)}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            includeFeaturedImage ? 'translate-x-6' : 'translate-x-1'
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  </div>
+                </CollapsibleSection>
+
+                {/* Custom Instructions */}
+                <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-6">
+                  <label className="block text-sm font-semibold text-gray-900 mb-3">
+                    Custom Instructions
+                  </label>
+                  <textarea
+                    value={customInstructions}
+                    onChange={(e) => setCustomInstructions(e.target.value)}
+                    rows={4}
+                    className="w-full rounded-lg border-gray-300 bg-white text-gray-900 placeholder-gray-400"
+                    placeholder="Add any specific instructions for the AI... (e.g., focus on beginners, include code examples, avoid jargon)"
+                  />
+                  {customInstructions && (
+                    <p className="mt-2 text-xs text-gray-500">
+                      {customInstructions.length} characters
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <div className="pt-6">
+                <button
+                  type="submit"
+                  disabled={isLoading || !url}
+                  onClick={() => console.log('Button clicked, URL:', url, 'isLoading:', isLoading)}
+                  className={`w-full py-4 px-6 text-base font-semibold rounded-xl text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transform transition-all duration-200 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
+                    (isLoading || !url) && 'opacity-50 cursor-not-allowed hover:scale-100'
+                  }`}
+                >
+                  {isLoading ? (
+                    <span className="flex items-center justify-center">
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Processing...
+                    </span>
+                  ) : (
+                    <span className="flex items-center justify-center">
+                      <svg className="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                      Generate Blog Post
+                    </span>
+                  )}
+                </button>
+              </div>
+
+              {/* Error Display */}
+              {error && (
+                <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <div className="flex">
+                    <svg className="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                    <div className="ml-3">
+                      <h3 className="text-sm font-medium text-red-800">Error</h3>
+                      <p className="mt-1 text-sm text-red-700">{error}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </form>
+          </div>
+
+          {/* Template Manager Modal */}
+          {showTemplateManager && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden">
+                <div className="p-6 border-b border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xl font-semibold text-gray-900">Template Manager</h3>
                     <button
-                      type="submit"
-                      disabled={isLoading || !url}
-                    className={`w-full flex justify-center items-center px-6 py-4 border border-transparent text-base font-medium rounded-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 shadow-lg hover:shadow-xl ${
-                        (isLoading || !url) && 'opacity-50 cursor-not-allowed'
-                      }`}
+                      onClick={() => setShowTemplateManager(false)}
+                      className="text-gray-400 hover:text-gray-600"
                     >
-                      {isLoading ? (
-                        <>
-                          <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          Converting...
-                        </>
-                      ) : (
-                      <>
-                        <svg className="mr-3 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
-                        Convert to Blog Post
-                      </>
-                      )}
+                      <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
                     </button>
                   </div>
+                </div>
+                
+                <div className="p-6 overflow-y-auto max-h-[60vh]">
+                  <button
+                    onClick={() => setShowSaveTemplate(true)}
+                    className="mb-6 w-full py-3 px-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                  >
+                    Save Current Settings as Template
+                  </button>
 
-                {/* Error Message */}
-                {error && (
-                  <div className="rounded-lg bg-red-50 p-4 border border-red-200">
-                    <div className="flex">
-                      <div className="flex-shrink-0">
-                        <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                      <div className="ml-3">
-                        <h3 className="text-sm font-medium text-red-800">Error</h3>
-                        <div className="mt-2 text-sm text-red-700">
-                          <p>{error}</p>
+                  {templates.length === 0 ? (
+                    <p className="text-center text-gray-500 py-8">
+                      No templates saved yet. Save your first template to get started!
+                    </p>
+                  ) : (
+                    <div className="space-y-3">
+                      {templates.map((template) => (
+                        <div key={template.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                          <div>
+                            <h4 className="font-medium text-gray-900">{template.name}</h4>
+                            <p className="text-sm text-gray-500">
+                              Created {new Date(template.createdAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => {
+                                loadTemplate(template.id);
+                                setShowTemplateManager(false);
+                              }}
+                              className="px-3 py-1 text-sm bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 transition-colors"
+                            >
+                              Use
+                            </button>
+                            <button
+                              onClick={() => deleteTemplate(template.id)}
+                              className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
+                            >
+                              Delete
+                            </button>
+                          </div>
                         </div>
-                      </div>
+                      ))}
                     </div>
-                  </div>
-                )}
-              </form>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Save Template Modal */}
+          {showSaveTemplate && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+                <div className="p-6">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-4">Save Template</h3>
+                  <input
+                    type="text"
+                    value={newTemplateName}
+                    onChange={(e) => setNewTemplateName(e.target.value)}
+                    placeholder="Template name..."
+                    className="w-full px-4 py-3 rounded-lg border border-gray-300 bg-white text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  />
+                  <div className="mt-6 flex space-x-3">
+                    <button
+                      onClick={() => {
+                        setShowSaveTemplate(false);
+                        setNewTemplateName('');
+                      }}
+                      className="flex-1 py-2 px-4 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={saveAsTemplate}
+                      disabled={!newTemplateName.trim()}
+                      className="flex-1 py-2 px-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
+
+      <style jsx>{`
+        @keyframes fade-in {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .animate-fade-in {
+          animation: fade-in 0.6s ease-out;
+        }
+      `}</style>
     </DashboardLayout>
   )
 }

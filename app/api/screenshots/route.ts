@@ -46,15 +46,19 @@ async function captureVideoScreenshot(page: any, videoId: string, timestamp: num
     const embedUrl = `https://www.youtube.com/embed/${videoId}?start=${timestamp}&autoplay=1&controls=0&modestbranding=1&rel=0&showinfo=0`;
     
     await page.goto(embedUrl, {
-      waitUntil: 'networkidle',
-      timeout: 45000 // Reduced timeout
+      waitUntil: 'domcontentloaded', // Changed from 'networkidle' to 'domcontentloaded'
+      timeout: 30000 // Reduced timeout since we're not waiting for network idle
     });
 
     // Wait for video to load and start playing
     await page.waitForTimeout(5000);
     
-    // Wait for video element to be present
-    await page.waitForSelector('video', { timeout: 30000 });
+    // Wait for video element to be present with shorter timeout
+    try {
+      await page.waitForSelector('video', { timeout: 15000 });
+    } catch (selectorError) {
+      console.log('Video element not found within timeout, proceeding anyway');
+    }
     
     // Wait for video to actually start playing
     await page.evaluate(() => {
@@ -103,8 +107,9 @@ async function captureVideoScreenshot(page: any, videoId: string, timestamp: num
     }
 
     return screenshotBuffer;
-  } catch (error) {
-    console.error(`Error capturing screenshot at ${timestamp}s:`, error);
+  } catch (error: any) {
+    const errorType = error.name === 'TimeoutError' ? 'Timeout' : 'Error';
+    console.error(`${errorType} capturing screenshot at ${timestamp}s:`, error.message || error);
     
     // Even if we encounter an error, try to take a screenshot of whatever is on the page
     try {

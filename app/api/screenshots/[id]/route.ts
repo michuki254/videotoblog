@@ -4,12 +4,13 @@ import Screenshot from '@/models/Screenshot'
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB()
     
-    const screenshot = await Screenshot.findById(params.id)
+    const { id } = await params
+    const screenshot = await Screenshot.findById(id)
     
     if (!screenshot) {
       return NextResponse.json(

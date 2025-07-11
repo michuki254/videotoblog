@@ -7,9 +7,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import ReactMarkdown from 'react-markdown'
 import DashboardSidebar from '../../components/DashboardSidebar'
-import Navigation from '../../components/Navigation'
 import JSZip from 'jszip'
-import { usePageTracking } from '@/hooks/usePageTracking'
 
 interface BlogPost {
   _id: string;
@@ -26,6 +24,10 @@ interface BlogPost {
   screenshotCount: number;
   hasTableOfContents: boolean;
   detailLevel: string;
+  urlSlug?: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  tags?: string[];
   contentAnalysis: {
     contentType: string;
     targetAudience: string;
@@ -412,7 +414,6 @@ export default function BlogPostPage() {
   // Blog Scoring State
   const [blogScoring, setBlogScoring] = useState<any>(null);
   const [scoringLoading, setScoringLoading] = useState(false);
-  const [scrollProgress, setScrollProgress] = useState(0);
 
   // Medium Integration State
   const [showMediumModal, setShowMediumModal] = useState(false)
@@ -443,9 +444,6 @@ export default function BlogPostPage() {
   // Sidebar state
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
-  // Page tracking
-  const { trackConversion } = usePageTracking(post?._id)
-
   useEffect(() => {
     console.log('🔍 useEffect triggered:', { isLoaded, paramsId: params.id, paramType: typeof params.id });
     if (isLoaded && params.id && params.id !== 'undefined') {
@@ -455,18 +453,6 @@ export default function BlogPostPage() {
       console.log('❌ Skipping fetch - invalid params:', { isLoaded, paramsId: params.id });
     }
   }, [isLoaded, params.id])
-
-  // Scroll progress indicator
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
-      const scrolled = (window.scrollY / scrollHeight) * 100;
-      setScrollProgress(scrolled);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [])
 
   // Load saved WordPress configuration when modal opens
   useEffect(() => {
@@ -587,9 +573,23 @@ export default function BlogPostPage() {
       const data = await response.json()
       setPost(data.post)
       
-      // Fetch AI-generated content
-      fetchAITags(postId)
-      fetchAIMetadata(postId)
+      // Check if tags exist in the database
+      if (!data.post.tags || data.post.tags.length === 0) {
+        fetchAITags(postId)
+      } else {
+        console.log('📦 Using stored tags from database, skipping AI generation');
+        setAiTags(data.post.tags)
+        setTagsLoading(false)
+      }
+      
+      // Only fetch metadata if it doesn't exist in the database
+      if (!data.post.urlSlug || !data.post.metaTitle || !data.post.metaDescription) {
+        fetchAIMetadata(postId)
+      } else {
+        console.log('📦 Using stored metadata from database, skipping AI generation');
+        setMetadataLoading(false)
+      }
+      
       fetchBlogScoring(postId)
     } catch (err) {
       console.error('❌ Error in fetchPost:', err);
@@ -742,8 +742,8 @@ export default function BlogPostPage() {
           publishSettings: {
             ...metaData,
             status: 'draft',
-            metaTitle: metaData.metaTitle || post.title,
-            metaDescription: metaData.metaDescription || generateMetaDescription(post.content)
+            metaTitle: metaData.metaTitle || post.metaTitle || post.title,
+            metaDescription: metaData.metaDescription || post.metaDescription || generateMetaDescription(post.content)
           }
         }),
       })
@@ -1422,8 +1422,8 @@ export default function BlogPostPage() {
       : generateTagsFromContent(post.content, post.title).slice(0, 5).map(tag => `#${tag.replace(/\s+/g, '')}`).join(' ');
 
     setFacebookContent({
-      title: aiMetadata?.metaTitle || generateMetaTitle(post.title),
-      description: aiMetadata?.metaDescription || generateMetaDescription(post.content),
+      title: aiMetadata?.metaTitle || post.metaTitle || generateMetaTitle(post.title),
+      description: aiMetadata?.metaDescription || post.metaDescription || generateMetaDescription(post.content),
       imageSource: selectedImage,
       articleSection: articleSection,
       tags: tagsString
@@ -1452,7 +1452,7 @@ export default function BlogPostPage() {
     }
 
     // Generate caption with title and description
-    const caption = `${post.title}\n\n${aiMetadata?.metaDescription || generateMetaDescription(post.content)}\n\nLink in bio 👆`;
+    const caption = `${post.title}\n\n${aiMetadata?.metaDescription || post.metaDescription || generateMetaDescription(post.content)}\n\nLink in bio 👆`;
     
     // Generate hashtags from AI tags or content
     const hashtags = aiTags.length > 0 
@@ -1474,7 +1474,7 @@ export default function BlogPostPage() {
     if (!post) return;
     
     // Generate tweet text (max 280 characters)
-    const baseText = `${post.title}\n\n${(aiMetadata?.metaDescription || generateMetaDescription(post.content)).substring(0, 120)}...`;
+    const baseText = `${post.title}\n\n${(aiMetadata?.metaDescription || post.metaDescription || generateMetaDescription(post.content)).substring(0, 120)}...`;
     
     // Generate hashtags from AI tags
     const hashtags = aiTags.length > 0 
@@ -1482,7 +1482,7 @@ export default function BlogPostPage() {
       : generateTagsFromContent(post.content, post.title).slice(0, 3).map(tag => `#${tag.replace(/\s+/g, '')}`).join(' ');
 
     // Generate thread content
-    const threadContent = `1/3 ${post.title}\n\n2/3 ${aiMetadata?.metaDescription || generateMetaDescription(post.content)}\n\n3/3 Read the full article: ${window.location.href}`;
+    const threadContent = `1/3 ${post.title}\n\n2/3 ${aiMetadata?.metaDescription || post.metaDescription || generateMetaDescription(post.content)}\n\n3/3 Read the full article: ${window.location.href}`;
 
     setTwitterContent({
       text: baseText,
@@ -1514,7 +1514,7 @@ export default function BlogPostPage() {
     }
 
     // Generate professional description
-    const description = `${aiMetadata?.metaDescription || generateMetaDescription(post.content)}\n\nKey insights from this ${post.contentAnalysis.contentType.toLowerCase()}:\n\n🎯 Target audience: ${post.contentAnalysis.targetAudience}\n📊 Word count: ${post.wordCount.toLocaleString()} words\n\nWhat are your thoughts on this topic?`;
+    const description = `${aiMetadata?.metaDescription || post.metaDescription || generateMetaDescription(post.content)}\n\nKey insights from this ${post.contentAnalysis.contentType.toLowerCase()}:\n\n🎯 Target audience: ${post.contentAnalysis.targetAudience}\n📊 Word count: ${post.wordCount.toLocaleString()} words\n\nWhat are your thoughts on this topic?`;
     
     // Generate hashtags from AI tags
     const tags = aiTags.length > 0 
@@ -1558,7 +1558,7 @@ I wanted to share this valuable ${post.contentAnalysis.contentType.toLowerCase()
 
 "${post.title}"
 
-${aiMetadata?.metaDescription || generateMetaDescription(post.content)}
+${aiMetadata?.metaDescription || post.metaDescription || generateMetaDescription(post.content)}
 
 This ${post.wordCount.toLocaleString()}-word piece is perfect for ${post.contentAnalysis.targetAudience.toLowerCase()} and covers key insights that I think you'll find valuable.
 
@@ -1569,7 +1569,7 @@ Best regards,
 
     setEmailContent({
       subject: `Check out: ${post.title}`,
-      preheader: aiMetadata?.metaDescription || generateMetaDescription(post.content).substring(0, 100),
+      preheader: aiMetadata?.metaDescription || post.metaDescription || generateMetaDescription(post.content).substring(0, 100),
       content: emailBody,
       cta: 'Read Full Article',
       imageSource: selectedImage
@@ -1607,221 +1607,177 @@ Best regards,
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
-      {/* Reading Progress Bar */}
-      <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-gray-200">
-        <div 
-          className="h-full bg-gradient-to-r from-blue-500 to-purple-600 transition-all duration-300"
-          style={{ width: `${scrollProgress}%` }}
-        />
-      </div>
-      
+    <div className="min-h-screen bg-gray-50">
       <DashboardSidebar
         isSidebarOpen={isSidebarOpen}
         setIsSidebarOpen={setIsSidebarOpen}
-        user={user ? {
+        user={{
           id: user.id,
-          fullName: user.fullName || null,
-          emailAddress: user.emailAddresses[0]?.emailAddress || '',
-          imageUrl: user.imageUrl || ''
-        } : undefined}
+          fullName: user.fullName,
+          emailAddress: user.emailAddresses[0].emailAddress,
+          imageUrl: user.imageUrl
+        }}
       />
       
       <div className="lg:pl-72">
-        {/* Hero Header */}
-        <div className="relative bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white">
-          <div className="absolute inset-0 bg-black opacity-10"></div>
-          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-            <nav className="flex items-center space-x-2 text-sm text-white/80 mb-6">
-              <Link href="/dashboard" className="hover:text-white transition-colors">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                </svg>
-              </Link>
-              <span className="text-white/60">›</span>
-              <Link href="/dashboard" className="hover:text-white transition-colors">Dashboard</Link>
-              <span className="text-white/60">›</span>
-              <span>Blog Post</span>
-            </nav>
-            
-            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 leading-tight">{post?.title}</h1>
-            
-            <div className="flex flex-wrap items-center gap-4 text-sm">
-              <div className="flex items-center gap-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <span>{post && formatDate(post.createdAt)}</span>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
-                <span>{post?.wordCount.toLocaleString()} words</span>
-                <span className="text-white/60">•</span>
-                <span>{Math.ceil((post?.wordCount || 0) / 250)} min read</span>
-              </div>
-              
-              <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                post?.status === 'published' 
-                  ? 'bg-green-500/20 text-green-100 border border-green-400/30' 
-                  : 'bg-yellow-500/20 text-yellow-100 border border-yellow-400/30'
-              }`}>
-                {post?.status === 'published' ? (
-                  <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
-                  </svg>
-                ) : (
-                  <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.3"/>
-                    <circle cx="12" cy="12" r="4" fill="currentColor"/>
-                  </svg>
-                )}
-                {post?.status}
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {loading ? (
             <div className="flex items-center justify-center min-h-[400px]">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
-                <p className="text-gray-600">Loading your blog post...</p>
-              </div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
             </div>
           ) : error ? (
-            <div className="text-center py-16">
-              <div className="bg-red-100 rounded-full p-4 w-20 h-20 mx-auto mb-4 flex items-center justify-center">
-                <svg className="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="text-center py-12">
+              <div className="text-red-600 mb-4">
+                <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Oops! Something went wrong</h2>
-              <p className="text-gray-600 mb-6 max-w-md mx-auto">{error}</p>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Error Loading Post</h2>
+              <p className="text-gray-600 mb-4">{error}</p>
               <Link
                 href="/dashboard"
-                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="text-blue-600 hover:text-blue-700 font-medium"
               >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                Back to Dashboard
+                ← Back to Dashboard
               </Link>
             </div>
           ) : post ? (
-            <div className="grid grid-cols-1 xl:grid-cols-8 gap-6 lg:gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-8 gap-8">
               {/* Main Content */}
-              <div className="xl:col-span-5 order-2 xl:order-1">
-                {/* Action Bar */}
-                <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 mb-8 border border-gray-100">
-                  <div className="flex flex-col space-y-4">
+              <div className="lg:col-span-5">
+                {/* Header */}
+                <div className="mb-8">
+                  <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-4">
+                    <Link href="/dashboard" className="hover:text-blue-600">Dashboard</Link>
+                    <span>›</span>
+                    <span className="text-gray-900">Blog Post</span>
+                  </nav>
 
-                    {/* Publishing & Action Buttons */}
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                      <h2 className="text-lg font-semibold text-gray-900">Quick Actions</h2>
-                      <button
-                        onClick={() => setShowPublishModal(true)}
-                        className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 group"
-                      >
-                        <svg className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
-                        </svg>
-                        Publish Blog Post
-                      </button>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                      <a
-                        href={post.videoUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex flex-col items-center justify-center p-4 bg-red-50 hover:bg-red-100 text-red-700 rounded-xl transition-all duration-200 group"
-                      >
-                        <svg className="w-6 h-6 mb-2 group-hover:scale-110 transition-transform duration-200" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M8 5v14l11-7z"/>
-                        </svg>
-                        <span className="text-sm font-medium">Watch Video</span>
-                      </a>
+                  <div className="bg-white rounded-lg shadow-sm p-6">
+                    <div className="flex flex-col space-y-4">
+                      {/* Title and Meta Info */}
+                      <div>
+                        <h1 className="text-3xl font-bold text-gray-900 mb-2">{post.title}</h1>
+                        <div className="flex items-center space-x-4 text-sm text-gray-600">
+                          <span>Created: {formatDate(post.createdAt)}</span>
+                          <span>•</span>
+                          <span>{post.wordCount.toLocaleString()} words</span>
+                          <span>•</span>
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            post.status === 'published' 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {post.status}
+                          </span>
+                        </div>
+                      </div>
 
-                      <button
-                        onClick={copyToClipboard}
-                        className="flex flex-col items-center justify-center p-4 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl transition-all duration-200 group"
-                      >
-                        <svg className="w-6 h-6 mb-2 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                        </svg>
-                        <span className="text-sm font-medium">Copy Content</span>
-                      </button>
-                      
-                      <button
-                        onClick={downloadAsFile}
-                        className="flex flex-col items-center justify-center p-4 bg-green-50 hover:bg-green-100 text-green-700 rounded-xl transition-all duration-200 group"
-                        title="Download as markdown file"
-                      >
-                        <svg className="w-6 h-6 mb-2 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        <span className="text-sm font-medium">Download</span>
-                      </button>
+                      {/* Publishing & Action Buttons - Clean Design */}
+                      <div className="pt-6 border-t border-gray-100">
+                        {/* Main Publish Button */}
+                        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                          <div className="flex-1">
+                            <button
+                              onClick={() => setShowPublishModal(true)}
+                              className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 group"
+                            >
+                              <svg className="w-6 h-6 mr-3 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
+                              </svg>
+                              Publish Blog Post
+                              <svg className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                              </svg>
+                            </button>
+                            <p className="text-sm text-gray-600 mt-2">Choose from WordPress, Medium, Blogger and more</p>
+                          </div>
 
-                      <button
-                        onClick={initializeEmailContent}
-                        className="flex flex-col items-center justify-center p-4 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-xl transition-all duration-200 group"
-                      >
-                        <svg className="w-6 h-6 mb-2 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                        </svg>
-                        <span className="text-sm font-medium">Email</span>
-                      </button>
-                    </div>
-                  </div>
+                          {/* Quick Actions */}
+                          <div className="flex flex-wrap gap-2">
+                            <a
+                              href={post.videoUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg shadow-sm transition-all duration-200 hover:shadow-md group"
+                              title="Watch original video"
+                            >
+                              <svg className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform duration-200" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M8 5v14l11-7z"/>
+                              </svg>
+                              Watch Video
+                            </a>
 
-                  {/* Quick Stats */}
-                  <div className="flex items-center justify-between pt-3 border-t border-gray-100 text-sm text-gray-500">
-                    <div className="flex items-center space-x-4">
-                      <span className="flex items-center">
-                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                        {post.wordCount.toLocaleString()} words
-                      </span>
-                      
-                      {post.hasScreenshots && (
-                        <span className="flex items-center">
-                          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          {post.screenshotCount} images
-                        </span>
-                      )}
-                      
-                      {post.hasTableOfContents && (
-                        <span className="flex items-center">
-                          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                          </svg>
-                          Table of Contents
-                        </span>
-                      )}
-                    </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      {post.seoOptimized && (
-                        <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-700">
-                          <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                          </svg>
-                          SEO Optimized
-                        </span>
-                      )}
-                      
-                      <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-700">
-                        {post.contentAnalysis.contentType}
-                      </span>
+                            <button
+                              onClick={copyToClipboard}
+                              className="inline-flex items-center px-4 py-2.5 border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 font-medium rounded-lg shadow-sm transition-all duration-200 hover:shadow-md group"
+                              title="Copy content to clipboard"
+                            >
+                              <svg className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                              </svg>
+                              Copy
+                            </button>
+                            
+                            <button
+                              onClick={downloadAsFile}
+                              className="inline-flex items-center px-4 py-2.5 border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 font-medium rounded-lg shadow-sm transition-all duration-200 hover:shadow-md group"
+                              title="Download as markdown file"
+                            >
+                              <svg className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
+                              Download
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Quick Stats */}
+                      <div className="flex items-center justify-between pt-3 border-t border-gray-100 text-sm text-gray-500">
+                        <div className="flex items-center space-x-4">
+                          <span className="flex items-center">
+                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            {post.wordCount.toLocaleString()} words
+                          </span>
+                          
+                          {post.hasScreenshots && (
+                            <span className="flex items-center">
+                              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                              {post.screenshotCount} images
+                            </span>
+                          )}
+                          
+                          {post.hasTableOfContents && (
+                            <span className="flex items-center">
+                              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                              </svg>
+                              Table of Contents
+                            </span>
+                          )}
+                        </div>
+                        
+                        <div className="flex items-center space-x-2">
+                          {post.seoOptimized && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-700">
+                              <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                              </svg>
+                              SEO Optimized
+                            </span>
+                          )}
+                          
+                          <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-700">
+                            {post.contentAnalysis.contentType}
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1890,25 +1846,13 @@ Best regards,
                 )}
 
                 {/* Blog Content */}
-                <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 lg:p-12">
-                  <article className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-a:text-blue-600 prose-strong:text-gray-900 prose-ul:text-gray-700 prose-ol:text-gray-700 prose-blockquote:border-blue-500 prose-code:text-blue-600 prose-pre:bg-gray-100">
+                <div className="bg-white rounded-lg shadow-sm p-8">
+                  <div className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-a:text-blue-600 prose-strong:text-gray-900 prose-ul:text-gray-700 prose-ol:text-gray-700 prose-blockquote:border-blue-500 prose-code:text-blue-600 prose-pre:bg-gray-100">
                     <ReactMarkdown
                       components={{
-                        h1: ({ children }) => (
-                          <h1 className="text-4xl font-bold mt-12 mb-6 text-gray-900 relative">
-                            <span className="absolute -left-8 lg:-left-12 top-1/2 transform -translate-y-1/2 w-4 lg:w-8 h-px bg-gradient-to-r from-blue-500 to-purple-500 hidden md:block"></span>
-                            {children}
-                          </h1>
-                        ),
-                        h2: ({ children }) => (
-                          <h2 className="text-3xl font-bold mt-10 mb-4 text-gray-900 relative group">
-                            <span className="absolute -left-6 lg:-left-8 top-1/2 transform -translate-y-1/2 w-3 lg:w-4 h-px bg-gradient-to-r from-blue-400 to-purple-400 hidden md:block"></span>
-                            {children}
-                          </h2>
-                        ),
-                        h3: ({ children }) => (
-                          <h3 className="text-2xl font-bold mt-8 mb-3 text-gray-900">{children}</h3>
-                        ),
+                        h1: ({ children }) => <h1 className="text-3xl font-bold mt-8 mb-4 text-gray-900">{children}</h1>,
+                        h2: ({ children }) => <h2 className="text-2xl font-bold mt-6 mb-3 text-gray-900">{children}</h2>,
+                        h3: ({ children }) => <h3 className="text-xl font-bold mt-4 mb-2 text-gray-900">{children}</h3>,
                         p: ({ children, node }) => {
                           // Check if paragraph contains only an image
                           if (node && node.children && node.children.length === 1) {
@@ -1918,55 +1862,31 @@ Best regards,
                               return children;
                             }
                           }
-                          return <p className="mb-6 text-gray-700 leading-loose text-lg">{children}</p>;
+                          return <p className="mb-4 text-gray-700 leading-relaxed">{children}</p>;
                         },
                         a: ({ href, children }) => (
-                          <a href={href} className="text-blue-600 hover:text-blue-800 underline decoration-2 underline-offset-2 transition-colors duration-200" target="_blank" rel="noopener noreferrer">
+                          <a href={href} className="text-blue-600 hover:text-blue-800 underline" target="_blank" rel="noopener noreferrer">
                             {children}
                           </a>
                         ),
                         img: ({ src, alt }) => (
                           <EnhancedImage src={src} alt={alt} />
                         ),
-                        ul: ({ children }) => (
-                          <ul className="list-none pl-0 mb-6 space-y-2">
-                            {children}
-                          </ul>
-                        ),
-                        ol: ({ children }) => (
-                          <ol className="list-none pl-0 mb-6 space-y-2 counter-reset-list">
-                            {children}
-                          </ol>
-                        ),
-                        li: ({ children, ordered }) => (
-                          <li className={`relative pl-8 ${ordered ? 'counter-increment-list' : ''}`}>
-                            {ordered ? (
-                              <span className="absolute left-0 top-0 text-blue-600 font-semibold">
-                                <span className="counter-list"></span>.
-                              </span>
-                            ) : (
-                              <span className="absolute left-0 top-2 w-2 h-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></span>
-                            )}
-                            <span className="text-gray-700">{children}</span>
-                          </li>
-                        ),
+                        ul: ({ children }) => <ul className="list-disc pl-6 mb-4 text-gray-700">{children}</ul>,
+                        ol: ({ children }) => <ol className="list-decimal pl-6 mb-4 text-gray-700">{children}</ol>,
+                        li: ({ children }) => <li className="mb-1">{children}</li>,
                         blockquote: ({ children }) => (
-                          <blockquote className="relative border-l-4 border-gradient-to-b from-blue-500 to-purple-500 pl-6 py-3 my-8 bg-gradient-to-r from-blue-50 to-purple-50 rounded-r-lg">
-                            <svg className="absolute -left-2 -top-2 w-8 h-8 text-blue-500 opacity-20" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
-                            </svg>
-                            <div className="relative italic text-gray-700">
-                              {children}
-                            </div>
+                          <blockquote className="border-l-4 border-blue-500 pl-4 italic my-4 text-gray-600">
+                            {children}
                           </blockquote>
                         ),
                         code: ({ children }) => (
-                          <code className="bg-gradient-to-r from-gray-100 to-gray-200 px-2 py-1 rounded text-sm font-mono text-blue-600 border border-gray-300">
+                          <code className="bg-gray-100 px-1 py-0.5 rounded text-sm text-blue-600">
                             {children}
                           </code>
                         ),
                         pre: ({ children }) => (
-                          <pre className="bg-gradient-to-br from-gray-900 to-gray-800 text-gray-100 p-6 rounded-xl overflow-x-auto text-sm shadow-inner my-6">
+                          <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto text-sm">
                             {children}
                           </pre>
                         )
@@ -1974,65 +1894,6 @@ Best regards,
                     >
                       {post.content}
                     </ReactMarkdown>
-                  </article>
-                  
-                  {/* Article Footer */}
-                  <div className="mt-12 pt-8 border-t border-gray-200">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                      <div className="flex items-center space-x-4">
-                        <span className="text-sm text-gray-500">Share this article:</span>
-                        <div className="flex items-center space-x-2">
-                          <button
-                            onClick={() => {
-                              const url = window.location.href;
-                              window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(post.title)}`, '_blank');
-                            }}
-                            className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-                            title="Share on X"
-                          >
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                            </svg>
-                          </button>
-                          <button
-                            onClick={() => {
-                              const url = window.location.href;
-                              window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, '_blank');
-                            }}
-                            className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-                            title="Share on LinkedIn"
-                          >
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                            </svg>
-                          </button>
-                          <button
-                            onClick={() => {
-                              navigator.clipboard.writeText(window.location.href);
-                              // Show success notification
-                              const notification = document.createElement('div');
-                              notification.className = 'fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-opacity duration-300';
-                              notification.textContent = 'Link copied!';
-                              document.body.appendChild(notification);
-                              setTimeout(() => {
-                                notification.style.opacity = '0';
-                                setTimeout(() => document.body.removeChild(notification), 300);
-                              }, 2000);
-                            }}
-                            className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-                            title="Copy link"
-                          >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                            </svg>
-                          </button>
-                        </div>
-                      </div>
-                      
-                      <div className="text-sm text-gray-500">
-                        Last updated: {new Date(post.updatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-                      </div>
-                    </div>
                   </div>
                 </div>
 
@@ -2289,45 +2150,48 @@ Best regards,
               </div>
 
               {/* Right Sidebar */}
-              <div className="xl:col-span-3 order-1 xl:order-2">
+              <div className="lg:col-span-3">
                 <div className="space-y-6">
-                  {/* Blog Scoring Section */}
-                  {(() => {
-                    const analysis = analyzeBlogContent(
-                      post.content, 
-                      post.title, 
-                      aiMetadata?.metaDescription || generateMetaDescription(post.content)
-                    )
-                    
-                    return (
-                      <div className="bg-gradient-to-br from-white via-blue-50 to-indigo-100 rounded-xl shadow-lg p-8">
-                        <div className="flex items-center justify-between mb-6">
-                          <h3 className="text-2xl font-bold text-gray-900 flex items-center">
-                            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center mr-3 shadow-lg">
-                              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                              </svg>
-                            </div>
-                            Blog Quality Score
-                          </h3>
+                  {/* Consolidated Blog Scoring Section */}
+                  <div className="bg-gradient-to-br from-white via-blue-50 to-indigo-100 rounded-xl shadow-lg p-8">
+                    <div className="flex items-center justify-between mb-6">
+                      <h3 className="text-2xl font-bold text-gray-900 flex items-center">
+                        <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center mr-3 shadow-lg">
+                          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                          </svg>
                         </div>
+                        Blog Quality Score
+                      </h3>
+                      {scoringLoading && (
+                        <span className="text-sm text-blue-600 flex items-center">
+                          <span className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></span>
+                          Analyzing...
+                        </span>
+                      )}
+                    </div>
 
+                    {blogScoring ? (
+                      <div className="space-y-6">
                         {/* Overall Score */}
-                        <div className="bg-white rounded-xl p-6 mb-6 shadow-md">
+                        <div className="bg-white rounded-xl p-6 shadow-md">
                           <div className="flex items-center justify-between mb-4">
                             <span className="text-lg font-semibold text-gray-800">Overall Performance</span>
                             <div className="flex items-center space-x-3">
                               <div className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold text-white shadow-lg ${
-                                analysis.grade === 'A' ? 'bg-gradient-to-r from-green-400 to-green-600' :
-                                analysis.grade === 'B' ? 'bg-gradient-to-r from-blue-400 to-blue-600' :
-                                analysis.grade === 'C' ? 'bg-gradient-to-r from-yellow-400 to-yellow-600' :
-                                analysis.grade === 'D' ? 'bg-gradient-to-r from-orange-400 to-orange-600' :
+                                blogScoring.scoring.score >= 85 ? 'bg-gradient-to-r from-green-400 to-green-600' :
+                                blogScoring.scoring.score >= 75 ? 'bg-gradient-to-r from-blue-400 to-blue-600' :
+                                blogScoring.scoring.score >= 65 ? 'bg-gradient-to-r from-yellow-400 to-yellow-600' :
+                                blogScoring.scoring.score >= 50 ? 'bg-gradient-to-r from-orange-400 to-orange-600' :
                                 'bg-gradient-to-r from-red-400 to-red-600'
                               }`}>
-                                {analysis.grade}
+                                {blogScoring.scoring.score >= 85 ? 'A' : 
+                                 blogScoring.scoring.score >= 75 ? 'B' :
+                                 blogScoring.scoring.score >= 65 ? 'C' :
+                                 blogScoring.scoring.score >= 50 ? 'D' : 'F'}
                               </div>
                               <div className="text-right">
-                                <div className="text-3xl font-bold text-gray-900">{analysis.totalScore}</div>
+                                <div className="text-3xl font-bold text-gray-900">{blogScoring.scoring.score}</div>
                                 <div className="text-sm text-gray-500">out of 100</div>
                               </div>
                             </div>
@@ -2337,13 +2201,13 @@ Best regards,
                             <div className="w-full bg-gray-200 rounded-full h-4 shadow-inner">
                               <div 
                                 className={`h-4 rounded-full transition-all duration-1000 ease-out shadow-sm ${
-                                  analysis.totalScore >= 85 ? 'bg-gradient-to-r from-green-400 to-green-500' :
-                                  analysis.totalScore >= 75 ? 'bg-gradient-to-r from-blue-400 to-blue-500' :
-                                  analysis.totalScore >= 65 ? 'bg-gradient-to-r from-yellow-400 to-yellow-500' :
-                                  analysis.totalScore >= 50 ? 'bg-gradient-to-r from-orange-400 to-orange-500' :
+                                  blogScoring.scoring.score >= 85 ? 'bg-gradient-to-r from-green-400 to-green-500' :
+                                  blogScoring.scoring.score >= 75 ? 'bg-gradient-to-r from-blue-400 to-blue-500' :
+                                  blogScoring.scoring.score >= 65 ? 'bg-gradient-to-r from-yellow-400 to-yellow-500' :
+                                  blogScoring.scoring.score >= 50 ? 'bg-gradient-to-r from-orange-400 to-orange-500' :
                                   'bg-gradient-to-r from-red-400 to-red-500'
                                 }`}
-                                style={{ width: `${analysis.totalScore}%` }}
+                                style={{ width: `${blogScoring.scoring.score}%` }}
                               ></div>
                             </div>
                             <div className="flex justify-between text-xs text-gray-500 mt-2">
@@ -2366,28 +2230,28 @@ Best regards,
                                 <span className="text-lg font-semibold text-gray-800">Readability</span>
                               </div>
                               <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                                analysis.details.readability.status === 'Excellent' ? 'bg-green-100 text-green-700' :
-                                analysis.details.readability.status === 'Good' ? 'bg-blue-100 text-blue-700' :
-                                analysis.details.readability.status === 'Fair' ? 'bg-yellow-100 text-yellow-700' :
+                                blogScoring.readability.recommendation === 'Excellent' ? 'bg-green-100 text-green-700' :
+                                blogScoring.readability.recommendation === 'Good' ? 'bg-blue-100 text-blue-700' :
+                                blogScoring.readability.recommendation === 'Fair' ? 'bg-yellow-100 text-yellow-700' :
                                 'bg-red-100 text-red-700'
                               }`}>
-                                {analysis.details.readability.status}
+                                {blogScoring.readability.recommendation}
                               </span>
                             </div>
                             <div className="text-sm text-gray-600 mb-3">
-                              Reading Level: <span className="font-semibold">{analysis.details.readability.gradeLevel}</span> 
-                              <span className="text-xs text-gray-500 ml-1">(Target: 7-8th grade)</span>
+                              Reading Level: <span className="font-semibold">{blogScoring.readability.gradeLevel}</span> 
+                              <span className="text-xs text-gray-500 ml-1">(Target: {blogScoring.readability.target})</span>
                             </div>
                             <div className="relative">
                               <div className="w-full bg-gray-200 rounded-full h-3">
                                 <div 
                                   className="h-3 rounded-full bg-gradient-to-r from-green-400 to-emerald-500 transition-all duration-700"
-                                  style={{ width: `${(analysis.details.readability.score / 20) * 100}%` }}
+                                  style={{ width: `${blogScoring.scoring.breakdown.readability * 10}%` }}
                                 ></div>
                               </div>
                               <div className="flex justify-between text-xs text-gray-500 mt-1">
-                                <span>{analysis.details.readability.score}/20 points</span>
-                                <span>{Math.round((analysis.details.readability.score / 20) * 100)}%</span>
+                                <span>{blogScoring.scoring.breakdown.readability}/10 points</span>
+                                <span>{Math.round(blogScoring.scoring.breakdown.readability * 10)}%</span>
                               </div>
                             </div>
                           </div>
@@ -2404,185 +2268,224 @@ Best regards,
                                 <span className="text-lg font-semibold text-gray-800">Content Structure</span>
                               </div>
                               <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                                analysis.details.structure.status === 'Excellent' ? 'bg-green-100 text-green-700' :
-                                analysis.details.structure.status === 'Good' ? 'bg-blue-100 text-blue-700' :
-                                analysis.details.structure.status === 'Fair' ? 'bg-yellow-100 text-yellow-700' :
+                                blogScoring.scoring.breakdown.structure >= 8 ? 'bg-green-100 text-green-700' :
+                                blogScoring.scoring.breakdown.structure >= 6 ? 'bg-blue-100 text-blue-700' :
+                                blogScoring.scoring.breakdown.structure >= 4 ? 'bg-yellow-100 text-yellow-700' :
                                 'bg-red-100 text-red-700'
                               }`}>
-                                {analysis.details.structure.status}
+                                {blogScoring.scoring.breakdown.structure >= 8 ? 'Excellent' :
+                                 blogScoring.scoring.breakdown.structure >= 6 ? 'Good' :
+                                 blogScoring.scoring.breakdown.structure >= 4 ? 'Fair' : 'Poor'}
                               </span>
                             </div>
                             
-                            <div className="grid grid-cols-2 gap-3 mb-3">
-                              <div className="bg-gray-50 rounded-lg p-3">
-                                <div className="text-xs text-gray-500 mb-1">Words</div>
-                                <div className="text-lg font-bold text-gray-900">{analysis.details.structure.wordCount}</div>
-                                <div className="text-xs text-gray-500">Target: &gt;300</div>
+                            <div className="grid grid-cols-4 gap-2 mb-3">
+                              <div className="text-center p-2 bg-gray-50 rounded">
+                                <div className="text-xl font-bold text-gray-900">{blogScoring.structure.wordCount}</div>
+                                <div className="text-xs text-gray-600">Words</div>
                               </div>
-                              <div className="bg-gray-50 rounded-lg p-3">
-                                <div className="text-xs text-gray-500 mb-1">Long Paragraphs</div>
-                                <div className="text-lg font-bold text-gray-900">{analysis.details.structure.longParagraphsPercent}%</div>
-                                <div className="text-xs text-gray-500">Target: &lt;25%</div>
+                              <div className="text-center p-2 bg-gray-50 rounded">
+                                <div className="text-xl font-bold text-gray-900">{blogScoring.structure.sectionCount}</div>
+                                <div className="text-xs text-gray-600">Sections</div>
                               </div>
-                              <div className="bg-gray-50 rounded-lg p-3">
-                                <div className="text-xs text-gray-500 mb-1">Images</div>
-                                <div className="text-lg font-bold text-gray-900">{analysis.details.structure.imageCount}</div>
-                                <div className="text-xs text-gray-500">Target: &gt;0</div>
+                              <div className="text-center p-2 bg-gray-50 rounded">
+                                <div className="text-xl font-bold text-gray-900">{blogScoring.structure.imageCount}</div>
+                                <div className="text-xs text-gray-600">Images</div>
                               </div>
-                              <div className="bg-gray-50 rounded-lg p-3">
-                                <div className="text-xs text-gray-500 mb-1">Links</div>
-                                <div className="text-lg font-bold text-gray-900">{analysis.details.structure.linkCount}</div>
-                                <div className="text-xs text-gray-500">Target: &gt;0</div>
+                              <div className="text-center p-2 bg-gray-50 rounded">
+                                <div className="text-xl font-bold text-gray-900">{blogScoring.structure.linkCount}</div>
+                                <div className="text-xs text-gray-600">Links</div>
                               </div>
                             </div>
                             
-                            <div className="relative">
+                            <div className="space-y-2">
+                              <div className="flex justify-between text-sm">
+                                <span className="text-gray-600">Long paragraphs</span>
+                                <span className={`font-medium ${
+                                  blogScoring.structure.longParagraphsPercent <= 10 ? 'text-green-600' :
+                                  blogScoring.structure.longParagraphsPercent <= 20 ? 'text-yellow-600' :
+                                  'text-red-600'
+                                }`}>
+                                  {blogScoring.structure.longParagraphsPercent}%
+                                </span>
+                              </div>
+                              <div className="flex justify-between text-sm">
+                                <span className="text-gray-600">Long sentences</span>
+                                <span className={`font-medium ${
+                                  blogScoring.structure.longSentencesPercent <= 10 ? 'text-green-600' :
+                                  blogScoring.structure.longSentencesPercent <= 20 ? 'text-yellow-600' :
+                                  'text-red-600'
+                                }`}>
+                                  {blogScoring.structure.longSentencesPercent}%
+                                </span>
+                              </div>
+                            </div>
+                            
+                            <div className="relative mt-3">
                               <div className="w-full bg-gray-200 rounded-full h-3">
                                 <div 
                                   className="h-3 rounded-full bg-gradient-to-r from-blue-400 to-indigo-500 transition-all duration-700"
-                                  style={{ width: `${(analysis.details.structure.score / 50) * 100}%` }}
+                                  style={{ width: `${blogScoring.scoring.breakdown.structure * 10}%` }}
                                 ></div>
                               </div>
                               <div className="flex justify-between text-xs text-gray-500 mt-1">
-                                <span>{analysis.details.structure.score}/50 points</span>
-                                <span>{Math.round((analysis.details.structure.score / 50) * 100)}%</span>
+                                <span>{blogScoring.scoring.breakdown.structure}/10 points</span>
+                                <span>{Math.round(blogScoring.scoring.breakdown.structure * 10)}%</span>
                               </div>
                             </div>
                           </div>
 
-                          {/* Keyphrase Analysis */}
+                          {/* SEO Analysis */}
                           <div className="bg-white rounded-lg p-5 shadow-md hover:shadow-lg transition-shadow duration-300">
                             <div className="flex items-center justify-between mb-3">
                               <div className="flex items-center">
                                 <div className="w-8 h-8 bg-gradient-to-r from-purple-400 to-pink-500 rounded-lg flex items-center justify-center mr-3">
                                   <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                   </svg>
                                 </div>
-                                <span className="text-lg font-semibold text-gray-800">SEO Keywords</span>
+                                <span className="text-lg font-semibold text-gray-800">SEO & Keywords</span>
                               </div>
                               <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                                analysis.details.keyphrase.status === 'Excellent' ? 'bg-green-100 text-green-700' :
-                                analysis.details.keyphrase.status === 'Good' ? 'bg-blue-100 text-blue-700' :
-                                analysis.details.keyphrase.status === 'Fair' ? 'bg-yellow-100 text-yellow-700' :
+                                blogScoring.scoring.breakdown.seo >= 8 ? 'bg-green-100 text-green-700' :
+                                blogScoring.scoring.breakdown.seo >= 6 ? 'bg-blue-100 text-blue-700' :
+                                blogScoring.scoring.breakdown.seo >= 4 ? 'bg-yellow-100 text-yellow-700' :
                                 'bg-red-100 text-red-700'
                               }`}>
-                                {analysis.details.keyphrase.status}
+                                {blogScoring.scoring.breakdown.seo >= 8 ? 'Excellent' :
+                                 blogScoring.scoring.breakdown.seo >= 6 ? 'Good' :
+                                 blogScoring.scoring.breakdown.seo >= 4 ? 'Fair' : 'Poor'}
                               </span>
                             </div>
                             
-                            <div className="bg-purple-50 rounded-lg p-3 mb-3">
-                              <div className="text-xs text-purple-600 mb-1">Focus Keyphrase</div>
-                              <div className="text-lg font-bold text-purple-900">"{analysis.details.keyphrase.phrase}"</div>
-                              <div className="text-sm text-purple-600 mt-1">Density: {analysis.details.keyphrase.density}% (Target: 1-5%)</div>
-                            </div>
+                            {blogScoring.keyphrase.keyphrase ? (
+                              <div className="space-y-3">
+                                <div className="bg-purple-50 p-3 rounded-lg">
+                                  <div className="text-sm font-medium text-purple-900 mb-1">Primary Keyphrase</div>
+                                  <div className="text-lg font-bold text-purple-700">"{blogScoring.keyphrase.keyphrase}"</div>
+                                  <div className="flex items-center space-x-4 mt-2 text-xs">
+                                    <span className="text-purple-600">
+                                      <strong>Density:</strong> {blogScoring.keyphrase.density}%
+                                    </span>
+                                    <span className="text-purple-600">
+                                      <strong>Count:</strong> {blogScoring.keyphrase.frequency}x
+                                    </span>
+                                  </div>
+                                </div>
+                                
+                                <div className="grid grid-cols-2 gap-2">
+                                  <div className={`flex items-center justify-center p-2 rounded text-xs font-medium ${
+                                    blogScoring.keyphrase.inTitle ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                                  }`}>
+                                    {blogScoring.keyphrase.inTitle ? '✓' : '✗'} In Title
+                                  </div>
+                                  <div className={`flex items-center justify-center p-2 rounded text-xs font-medium ${
+                                    blogScoring.keyphrase.inIntroduction ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                                  }`}>
+                                    {blogScoring.keyphrase.inIntroduction ? '✓' : '✗'} In Introduction
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="text-sm text-gray-500 text-center py-2">No significant keyphrase detected</div>
+                            )}
                             
-                            <div className="grid grid-cols-3 gap-2 mb-3">
-                              <div className={`p-2 rounded-lg text-center ${analysis.details.keyphrase.inTitle ? 'bg-green-100' : 'bg-red-100'}`}>
-                                <div className={`text-xs font-medium ${analysis.details.keyphrase.inTitle ? 'text-green-700' : 'text-red-700'}`}>Title</div>
-                                <div className={`text-lg ${analysis.details.keyphrase.inTitle ? 'text-green-600' : 'text-red-600'}`}>
-                                  {analysis.details.keyphrase.inTitle ? '✓' : '✗'}
-                                </div>
-                              </div>
-                              <div className={`p-2 rounded-lg text-center ${analysis.details.keyphrase.inIntro ? 'bg-green-100' : 'bg-red-100'}`}>
-                                <div className={`text-xs font-medium ${analysis.details.keyphrase.inIntro ? 'text-green-700' : 'text-red-700'}`}>Intro</div>
-                                <div className={`text-lg ${analysis.details.keyphrase.inIntro ? 'text-green-600' : 'text-red-600'}`}>
-                                  {analysis.details.keyphrase.inIntro ? '✓' : '✗'}
-                                </div>
-                              </div>
-                              <div className={`p-2 rounded-lg text-center ${analysis.details.keyphrase.inMeta ? 'bg-green-100' : 'bg-red-100'}`}>
-                                <div className={`text-xs font-medium ${analysis.details.keyphrase.inMeta ? 'text-green-700' : 'text-red-700'}`}>Meta</div>
-                                <div className={`text-lg ${analysis.details.keyphrase.inMeta ? 'text-green-600' : 'text-red-600'}`}>
-                                  {analysis.details.keyphrase.inMeta ? '✓' : '✗'}
-                                </div>
-                              </div>
-                            </div>
-                            
-                            <div className="relative">
+                            <div className="relative mt-3">
                               <div className="w-full bg-gray-200 rounded-full h-3">
                                 <div 
                                   className="h-3 rounded-full bg-gradient-to-r from-purple-400 to-pink-500 transition-all duration-700"
-                                  style={{ width: `${(analysis.details.keyphrase.score / 30) * 100}%` }}
+                                  style={{ width: `${blogScoring.scoring.breakdown.seo * 10}%` }}
                                 ></div>
                               </div>
                               <div className="flex justify-between text-xs text-gray-500 mt-1">
-                                <span>{analysis.details.keyphrase.score}/30 points</span>
-                                <span>{Math.round((analysis.details.keyphrase.score / 30) * 100)}%</span>
+                                <span>{blogScoring.scoring.breakdown.seo}/10 points</span>
+                                <span>{Math.round(blogScoring.scoring.breakdown.seo * 10)}%</span>
                               </div>
                             </div>
                           </div>
                         </div>
 
                         {/* Improvement Tips */}
-                        {analysis.totalScore < 85 && (
-                          <div className="mt-6 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-5">
+                        {blogScoring.scoring.score < 85 && (
+                          <div className="mt-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-5">
                             <div className="flex items-center mb-3">
                               <div className="w-8 h-8 bg-gradient-to-r from-amber-400 to-orange-500 rounded-lg flex items-center justify-center mr-3">
                                 <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                                 </svg>
                               </div>
-                              <h4 className="text-lg font-bold text-amber-800">Smart Improvement Tips</h4>
+                              <h4 className="text-lg font-bold text-amber-800">Quick Improvements</h4>
                             </div>
                             <div className="space-y-2">
-                              {analysis.details.readability.score < 15 && (
-                                <div className="flex items-start p-3 bg-white rounded-lg">
-                                  <div className="w-2 h-2 bg-amber-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                                  <span className="text-sm text-gray-700">Break down complex sentences for better readability</span>
+                              {blogScoring.scoring.breakdown.readability < 7 && (
+                                <div className="flex items-start">
+                                  <div className="w-2 h-2 bg-amber-400 rounded-full mt-1.5 mr-2 flex-shrink-0"></div>
+                                  <span className="text-sm text-gray-700">Simplify complex sentences to improve readability</span>
                                 </div>
                               )}
-                              {analysis.details.structure.wordCount < 300 && (
-                                <div className="flex items-start p-3 bg-white rounded-lg">
-                                  <div className="w-2 h-2 bg-amber-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                                  <span className="text-sm text-gray-700">Expand your content to reach 300+ words for better SEO</span>
+                              {blogScoring.structure.wordCount < 300 && (
+                                <div className="flex items-start">
+                                  <div className="w-2 h-2 bg-amber-400 rounded-full mt-1.5 mr-2 flex-shrink-0"></div>
+                                  <span className="text-sm text-gray-700">Add more content (300+ words) for better SEO</span>
                                 </div>
                               )}
-                              {analysis.details.structure.imageCount === 0 && (
-                                <div className="flex items-start p-3 bg-white rounded-lg">
-                                  <div className="w-2 h-2 bg-amber-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                                  <span className="text-sm text-gray-700">Add relevant images to boost engagement and visual appeal</span>
+                              {blogScoring.structure.imageCount === 0 && (
+                                <div className="flex items-start">
+                                  <div className="w-2 h-2 bg-amber-400 rounded-full mt-1.5 mr-2 flex-shrink-0"></div>
+                                  <span className="text-sm text-gray-700">Include images to increase engagement</span>
                                 </div>
                               )}
-                              {analysis.details.structure.linkCount === 0 && (
-                                <div className="flex items-start p-3 bg-white rounded-lg">
-                                  <div className="w-2 h-2 bg-amber-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                                  <span className="text-sm text-gray-700">Include internal/external links for better SEO performance</span>
-                                </div>
-                              )}
-                              {analysis.details.keyphrase.density < 1 && (
-                                <div className="flex items-start p-3 bg-white rounded-lg">
-                                  <div className="w-2 h-2 bg-amber-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                                  <span className="text-sm text-gray-700">Increase keyphrase usage to 1-5% density for optimal SEO</span>
-                                </div>
-                              )}
-                              {!analysis.details.keyphrase.inTitle && (
-                                <div className="flex items-start p-3 bg-white rounded-lg">
-                                  <div className="w-2 h-2 bg-amber-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                                  <span className="text-sm text-gray-700">Include your focus keyphrase in the title</span>
-                                </div>
-                              )}
-                              {!analysis.details.keyphrase.inIntro && (
-                                <div className="flex items-start p-3 bg-white rounded-lg">
-                                  <div className="w-2 h-2 bg-amber-400 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                                  <span className="text-sm text-gray-700">Mention your keyphrase in the introduction paragraph</span>
+                              {blogScoring.keyphrase.density < 1 && blogScoring.keyphrase.keyphrase && (
+                                <div className="flex items-start">
+                                  <div className="w-2 h-2 bg-amber-400 rounded-full mt-1.5 mr-2 flex-shrink-0"></div>
+                                  <span className="text-sm text-gray-700">Use your keyphrase more frequently (1-3% density)</span>
                                 </div>
                               )}
                             </div>
                           </div>
                         )}
+
+                        {/* Action Buttons */}
+                        <div className="flex space-x-3 mt-6">
+                          <button
+                            onClick={() => post && fetchBlogScoring(post._id)}
+                            disabled={scoringLoading}
+                            className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-medium rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 disabled:opacity-50 flex items-center justify-center shadow-md"
+                          >
+                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            {scoringLoading ? 'Analyzing...' : 'Refresh Analysis'}
+                          </button>
+                        </div>
                       </div>
-                    )
-                  })()}
+                    ) : scoringLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <svg className="w-12 h-12 mx-auto text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        <p className="text-gray-500 mb-3">Score analysis unavailable</p>
+                        <button
+                          onClick={() => post && fetchBlogScoring(post._id)}
+                          className="px-4 py-2 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                        >
+                          Analyze Blog
+                        </button>
+                      </div>
+                    )}
+                  </div>
 
                   {/* Metadata Section */}
-                  <div className="bg-gradient-to-br from-white to-blue-50 rounded-2xl shadow-lg p-6 border border-blue-100">
+                  <div className="bg-white rounded-lg shadow-sm p-6">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                      <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mr-3 shadow">
-                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                        </svg>
-                      </div>
-                      SEO Metadata
+                      <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                      </svg>
+                      Metadata
                     </h3>
 
                     <div className="space-y-4">
@@ -2599,7 +2502,7 @@ Best regards,
                         </label>
                         <div className="bg-gray-50 rounded-md p-3 border relative group">
                           <code className="text-sm text-gray-800 break-all pr-16">
-                            /{aiMetadata?.urlSlug || generateSlug(post.title)}
+                            /{aiMetadata?.urlSlug || post.urlSlug || generateSlug(post.title)}
                           </code>
                           <div className="absolute top-2 right-2 flex items-center space-x-1">
                             <button
@@ -2617,7 +2520,7 @@ Best regards,
                               )}
                             </button>
                             <button
-                              onClick={() => copyMetadata(`/${aiMetadata?.urlSlug || generateSlug(post.title)}`, 'URL Slug')}
+                              onClick={() => copyMetadata(`/${aiMetadata?.urlSlug || post.urlSlug || generateSlug(post.title)}`, 'URL Slug')}
                               className="p-1 text-gray-400 hover:text-gray-600 transition-opacity"
                               title="Copy URL slug"
                             >
@@ -2642,7 +2545,7 @@ Best regards,
                         </label>
                         <div className="bg-gray-50 rounded-md p-3 border relative group">
                           <p className="text-sm text-gray-800 mb-2 pr-16">
-                            {aiMetadata?.metaTitle || generateMetaTitle(post.title)}
+                            {aiMetadata?.metaTitle || post.metaTitle || generateMetaTitle(post.title)}
                           </p>
                           <div className="absolute top-2 right-2 flex items-center space-x-1">
                             <button
@@ -2660,7 +2563,7 @@ Best regards,
                               )}
                             </button>
                             <button
-                              onClick={() => copyMetadata(aiMetadata?.metaTitle || generateMetaTitle(post.title), 'Meta Title')}
+                              onClick={() => copyMetadata(aiMetadata?.metaTitle || post.metaTitle || generateMetaTitle(post.title), 'Meta Title')}
                               className="p-1 text-gray-400 hover:text-gray-600 transition-opacity"
                               title="Copy meta title"
                             >
@@ -2674,11 +2577,11 @@ Best regards,
                               Recommended: 60 characters
                             </span>
                             <span className={`font-medium ${
-                              (aiMetadata?.metaTitle || generateMetaTitle(post.title)).length <= 60 
+                              (aiMetadata?.metaTitle || post.metaTitle || generateMetaTitle(post.title)).length <= 60 
                                 ? 'text-green-600' 
                                 : 'text-red-600'
                             }`}>
-                              You've used {(aiMetadata?.metaTitle || generateMetaTitle(post.title)).length}
+                              You've used {(aiMetadata?.metaTitle || post.metaTitle || generateMetaTitle(post.title)).length}
                             </span>
                           </div>
                         </div>
@@ -2697,7 +2600,7 @@ Best regards,
                         </label>
                         <div className="bg-gray-50 rounded-md p-3 border relative group">
                           <p className="text-sm text-gray-800 mb-2 pr-16">
-                            {aiMetadata?.metaDescription || generateMetaDescription(post.content)}
+                            {aiMetadata?.metaDescription || post.metaDescription || generateMetaDescription(post.content)}
                           </p>
                           <div className="absolute top-2 right-2 flex items-center space-x-1">
                             <button
@@ -2715,7 +2618,7 @@ Best regards,
                               )}
                             </button>
                             <button
-                              onClick={() => copyMetadata(aiMetadata?.metaDescription || generateMetaDescription(post.content), 'Meta Description')}
+                              onClick={() => copyMetadata(aiMetadata?.metaDescription || post.metaDescription || generateMetaDescription(post.content), 'Meta Description')}
                               className="p-1 text-gray-400 hover:text-gray-600 transition-opacity"
                               title="Copy meta description"
                             >
@@ -2729,13 +2632,13 @@ Best regards,
                               Recommended: 145 characters
                             </span>
                             <span className={`font-medium ${
-                              (aiMetadata?.metaDescription || generateMetaDescription(post.content)).length <= 145 
+                              (aiMetadata?.metaDescription || post.metaDescription || generateMetaDescription(post.content)).length <= 145 
                                 ? 'text-green-600' 
-                                : (aiMetadata?.metaDescription || generateMetaDescription(post.content)).length <= 160
+                                : (aiMetadata?.metaDescription || post.metaDescription || generateMetaDescription(post.content)).length <= 160
                                 ? 'text-yellow-600'
                                 : 'text-red-600'
                             }`}>
-                              You've used {(aiMetadata?.metaDescription || generateMetaDescription(post.content)).length}
+                              You've used {(aiMetadata?.metaDescription || post.metaDescription || generateMetaDescription(post.content)).length}
                             </span>
                           </div>
                         </div>
@@ -2743,15 +2646,351 @@ Best regards,
                     </div>
                   </div>
 
-                  {/* Tags Section */}
-                  <div className="bg-gradient-to-br from-white to-purple-50 rounded-2xl shadow-lg p-6 border border-purple-100">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                      <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mr-3 shadow">
-                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                        </svg>
+                    {blogScoring ? (
+                      <div className="space-y-6">
+                        {/* Overall Score */}
+                        <div className="bg-white rounded-xl p-6 shadow-md">
+                          <div className="flex items-center justify-between mb-4">
+                            <span className="text-lg font-semibold text-gray-800">Overall Performance</span>
+                            <div className="flex items-center space-x-3">
+                              <div className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold text-white shadow-lg ${
+                                blogScoring.scoring.score >= 85 ? 'bg-gradient-to-r from-green-400 to-green-600' :
+                                blogScoring.scoring.score >= 75 ? 'bg-gradient-to-r from-blue-400 to-blue-600' :
+                                blogScoring.scoring.score >= 65 ? 'bg-gradient-to-r from-yellow-400 to-yellow-600' :
+                                blogScoring.scoring.score >= 50 ? 'bg-gradient-to-r from-orange-400 to-orange-600' :
+                                'bg-gradient-to-r from-red-400 to-red-600'
+                              }`}>
+                                {blogScoring.scoring.score >= 85 ? 'A' : 
+                                 blogScoring.scoring.score >= 75 ? 'B' :
+                                 blogScoring.scoring.score >= 65 ? 'C' :
+                                 blogScoring.scoring.score >= 50 ? 'D' : 'F'}
+                              </div>
+                              <div className="text-right">
+                                <div className="text-3xl font-bold text-gray-900">{blogScoring.scoring.score}</div>
+                                <div className="text-sm text-gray-500">out of 100</div>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="relative">
+                            <div className="w-full bg-gray-200 rounded-full h-4 shadow-inner">
+                              <div 
+                                className={`h-4 rounded-full transition-all duration-1000 ease-out shadow-sm ${
+                                  blogScoring.scoring.score >= 85 ? 'bg-gradient-to-r from-green-400 to-green-500' :
+                                  blogScoring.scoring.score >= 75 ? 'bg-gradient-to-r from-blue-400 to-blue-500' :
+                                  blogScoring.scoring.score >= 65 ? 'bg-gradient-to-r from-yellow-400 to-yellow-500' :
+                                  blogScoring.scoring.score >= 50 ? 'bg-gradient-to-r from-orange-400 to-orange-500' :
+                                  'bg-gradient-to-r from-red-400 to-red-500'
+                                }`}
+                                style={{ width: `${blogScoring.scoring.score}%` }}
+                              ></div>
+                            </div>
+                            <div className="flex justify-between text-xs text-gray-500 mt-2">
+                              <span>Poor (0-49)</span>
+                              <span>Good (50-74)</span>
+                              <span>Excellent (75+)</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Detailed Breakdown */}
+                        <div className="space-y-4">
+                          {/* Readability */}
+                          <div className="bg-white rounded-lg p-5 shadow-md hover:shadow-lg transition-shadow duration-300">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center">
+                                <div className="w-8 h-8 bg-gradient-to-r from-green-400 to-emerald-500 rounded-lg flex items-center justify-center mr-3">
+                                  <span className="text-white text-sm font-bold">✓</span>
+                                </div>
+                                <span className="text-lg font-semibold text-gray-800">Readability</span>
+                              </div>
+                              <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                blogScoring.readability.recommendation === 'Excellent' ? 'bg-green-100 text-green-700' :
+                                blogScoring.readability.recommendation === 'Good' ? 'bg-blue-100 text-blue-700' :
+                                blogScoring.readability.recommendation === 'Fair' ? 'bg-yellow-100 text-yellow-700' :
+                                'bg-red-100 text-red-700'
+                              }`}>
+                                {blogScoring.readability.recommendation}
+                              </span>
+                            </div>
+                            <div className="text-sm text-gray-600 mb-3">
+                              Reading Level: <span className="font-semibold">{blogScoring.readability.gradeLevel}</span> 
+                              <span className="text-xs text-gray-500 ml-1">(Target: {blogScoring.readability.target})</span>
+                            </div>
+                            <div className="relative">
+                              <div className="w-full bg-gray-200 rounded-full h-3">
+                                <div 
+                                  className="h-3 rounded-full bg-gradient-to-r from-green-400 to-emerald-500 transition-all duration-700"
+                                  style={{ width: `${blogScoring.scoring.breakdown.readability * 10}%` }}
+                                ></div>
+                              </div>
+                              <div className="flex justify-between text-xs text-gray-500 mt-1">
+                                <span>{blogScoring.scoring.breakdown.readability}/10 points</span>
+                                <span>{Math.round(blogScoring.scoring.breakdown.readability * 10)}%</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Content Structure */}
+                          <div className="bg-white rounded-lg p-5 shadow-md hover:shadow-lg transition-shadow duration-300">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center">
+                                <div className="w-8 h-8 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-lg flex items-center justify-center mr-3">
+                                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                  </svg>
+                                </div>
+                                <span className="text-lg font-semibold text-gray-800">Content Structure</span>
+                              </div>
+                              <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                blogScoring.scoring.breakdown.structure >= 8 ? 'bg-green-100 text-green-700' :
+                                blogScoring.scoring.breakdown.structure >= 6 ? 'bg-blue-100 text-blue-700' :
+                                blogScoring.scoring.breakdown.structure >= 4 ? 'bg-yellow-100 text-yellow-700' :
+                                'bg-red-100 text-red-700'
+                              }`}>
+                                {blogScoring.scoring.breakdown.structure >= 8 ? 'Excellent' :
+                                 blogScoring.scoring.breakdown.structure >= 6 ? 'Good' :
+                                 blogScoring.scoring.breakdown.structure >= 4 ? 'Fair' : 'Poor'}
+                              </span>
+                            </div>
+                            
+                            <div className="grid grid-cols-4 gap-2 mb-3">
+                              <div className="text-center p-2 bg-gray-50 rounded">
+                                <div className="text-xl font-bold text-gray-900">{blogScoring.structure.wordCount}</div>
+                                <div className="text-xs text-gray-600">Words</div>
+                              </div>
+                              <div className="text-center p-2 bg-gray-50 rounded">
+                                <div className="text-xl font-bold text-gray-900">{blogScoring.structure.sectionCount}</div>
+                                <div className="text-xs text-gray-600">Sections</div>
+                              </div>
+                              <div className="text-center p-2 bg-gray-50 rounded">
+                                <div className="text-xl font-bold text-gray-900">{blogScoring.structure.imageCount}</div>
+                                <div className="text-xs text-gray-600">Images</div>
+                              </div>
+                              <div className="text-center p-2 bg-gray-50 rounded">
+                                <div className="text-xl font-bold text-gray-900">{blogScoring.structure.linkCount}</div>
+                                <div className="text-xs text-gray-600">Links</div>
+                              </div>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <div className="flex justify-between text-sm">
+                                <span className="text-gray-600">Long paragraphs</span>
+                                <span className={`font-medium ${
+                                  blogScoring.structure.longParagraphsPercent <= 10 ? 'text-green-600' :
+                                  blogScoring.structure.longParagraphsPercent <= 20 ? 'text-yellow-600' :
+                                  'text-red-600'
+                                }`}>
+                                  {blogScoring.structure.longParagraphsPercent}%
+                                </span>
+                              </div>
+                              <div className="flex justify-between text-sm">
+                                <span className="text-gray-600">Long sentences</span>
+                                <span className={`font-medium ${
+                                  blogScoring.structure.longSentencesPercent <= 10 ? 'text-green-600' :
+                                  blogScoring.structure.longSentencesPercent <= 20 ? 'text-yellow-600' :
+                                  'text-red-600'
+                                }`}>
+                                  {blogScoring.structure.longSentencesPercent}%
+                                </span>
+                              </div>
+                            </div>
+                            
+                            <div className="relative mt-3">
+                              <div className="w-full bg-gray-200 rounded-full h-3">
+                                <div 
+                                  className="h-3 rounded-full bg-gradient-to-r from-blue-400 to-indigo-500 transition-all duration-700"
+                                  style={{ width: `${blogScoring.scoring.breakdown.structure * 10}%` }}
+                                ></div>
+                              </div>
+                              <div className="flex justify-between text-xs text-gray-500 mt-1">
+                                <span>{blogScoring.scoring.breakdown.structure}/10 points</span>
+                                <span>{Math.round(blogScoring.scoring.breakdown.structure * 10)}%</span>
+                              </div>
+                            </div>
+                          </div>
+
+                        {/* Keyphrase Analysis */}
+                        <div className="border-t pt-4">
+                          <h4 className="text-sm font-medium text-gray-700 mb-2">Keyphrase Analysis</h4>
+                          {blogScoring.keyphrase.keyphrase ? (
+                            <div className="space-y-2">
+                              <div className="bg-blue-50 p-2 rounded text-xs">
+                                <div className="font-medium text-blue-900">"{blogScoring.keyphrase.keyphrase}"</div>
+                                <div className="text-blue-700 mt-1">
+                                  Density: {blogScoring.keyphrase.density}% • 
+                                  Frequency: {blogScoring.keyphrase.frequency}
+                                </div>
+                              </div>
+                              <div className="flex space-x-2 text-xs">
+                                <span className={`px-2 py-1 rounded ${
+                                  blogScoring.keyphrase.inTitle ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                }`}>
+                                  {blogScoring.keyphrase.inTitle ? '✓' : '✗'} Title
+                                </span>
+                                <span className={`px-2 py-1 rounded ${
+                                  blogScoring.keyphrase.inIntroduction ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                }`}>
+                                  {blogScoring.keyphrase.inIntroduction ? '✓' : '✗'} Intro
+                                </span>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="text-xs text-gray-500">No significant keyphrase detected</div>
+                          )}
+                        </div>
+
+                          {/* SEO Analysis */}
+                          <div className="bg-white rounded-lg p-5 shadow-md hover:shadow-lg transition-shadow duration-300">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center">
+                                <div className="w-8 h-8 bg-gradient-to-r from-purple-400 to-pink-500 rounded-lg flex items-center justify-center mr-3">
+                                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                  </svg>
+                                </div>
+                                <span className="text-lg font-semibold text-gray-800">SEO & Keywords</span>
+                              </div>
+                              <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                blogScoring.scoring.breakdown.seo >= 8 ? 'bg-green-100 text-green-700' :
+                                blogScoring.scoring.breakdown.seo >= 6 ? 'bg-blue-100 text-blue-700' :
+                                blogScoring.scoring.breakdown.seo >= 4 ? 'bg-yellow-100 text-yellow-700' :
+                                'bg-red-100 text-red-700'
+                              }`}>
+                                {blogScoring.scoring.breakdown.seo >= 8 ? 'Excellent' :
+                                 blogScoring.scoring.breakdown.seo >= 6 ? 'Good' :
+                                 blogScoring.scoring.breakdown.seo >= 4 ? 'Fair' : 'Poor'}
+                              </span>
+                            </div>
+                            
+                            {blogScoring.keyphrase.keyphrase ? (
+                              <div className="space-y-3">
+                                <div className="bg-purple-50 p-3 rounded-lg">
+                                  <div className="text-sm font-medium text-purple-900 mb-1">Primary Keyphrase</div>
+                                  <div className="text-lg font-bold text-purple-700">"{blogScoring.keyphrase.keyphrase}"</div>
+                                  <div className="flex items-center space-x-4 mt-2 text-xs">
+                                    <span className="text-purple-600">
+                                      <strong>Density:</strong> {blogScoring.keyphrase.density}%
+                                    </span>
+                                    <span className="text-purple-600">
+                                      <strong>Count:</strong> {blogScoring.keyphrase.frequency}x
+                                    </span>
+                                  </div>
+                                </div>
+                                
+                                <div className="grid grid-cols-2 gap-2">
+                                  <div className={`flex items-center justify-center p-2 rounded text-xs font-medium ${
+                                    blogScoring.keyphrase.inTitle ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                                  }`}>
+                                    {blogScoring.keyphrase.inTitle ? '✓' : '✗'} In Title
+                                  </div>
+                                  <div className={`flex items-center justify-center p-2 rounded text-xs font-medium ${
+                                    blogScoring.keyphrase.inIntroduction ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                                  }`}>
+                                    {blogScoring.keyphrase.inIntroduction ? '✓' : '✗'} In Introduction
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="text-sm text-gray-500 text-center py-2">No significant keyphrase detected</div>
+                            )}
+                            
+                            <div className="relative mt-3">
+                              <div className="w-full bg-gray-200 rounded-full h-3">
+                                <div 
+                                  className="h-3 rounded-full bg-gradient-to-r from-purple-400 to-pink-500 transition-all duration-700"
+                                  style={{ width: `${blogScoring.scoring.breakdown.seo * 10}%` }}
+                                ></div>
+                              </div>
+                              <div className="flex justify-between text-xs text-gray-500 mt-1">
+                                <span>{blogScoring.scoring.breakdown.seo}/10 points</span>
+                                <span>{Math.round(blogScoring.scoring.breakdown.seo * 10)}%</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Improvement Tips */}
+                        {blogScoring.scoring.score < 85 && (
+                          <div className="mt-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-5">
+                            <div className="flex items-center mb-3">
+                              <div className="w-8 h-8 bg-gradient-to-r from-amber-400 to-orange-500 rounded-lg flex items-center justify-center mr-3">
+                                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                </svg>
+                              </div>
+                              <h4 className="text-lg font-bold text-amber-800">Quick Improvements</h4>
+                            </div>
+                            <div className="space-y-2">
+                              {blogScoring.scoring.breakdown.readability < 7 && (
+                                <div className="flex items-start">
+                                  <div className="w-2 h-2 bg-amber-400 rounded-full mt-1.5 mr-2 flex-shrink-0"></div>
+                                  <span className="text-sm text-gray-700">Simplify complex sentences to improve readability</span>
+                                </div>
+                              )}
+                              {blogScoring.structure.wordCount < 300 && (
+                                <div className="flex items-start">
+                                  <div className="w-2 h-2 bg-amber-400 rounded-full mt-1.5 mr-2 flex-shrink-0"></div>
+                                  <span className="text-sm text-gray-700">Add more content (300+ words) for better SEO</span>
+                                </div>
+                              )}
+                              {blogScoring.structure.imageCount === 0 && (
+                                <div className="flex items-start">
+                                  <div className="w-2 h-2 bg-amber-400 rounded-full mt-1.5 mr-2 flex-shrink-0"></div>
+                                  <span className="text-sm text-gray-700">Include images to increase engagement</span>
+                                </div>
+                              )}
+                              {blogScoring.keyphrase.density < 1 && blogScoring.keyphrase.keyphrase && (
+                                <div className="flex items-start">
+                                  <div className="w-2 h-2 bg-amber-400 rounded-full mt-1.5 mr-2 flex-shrink-0"></div>
+                                  <span className="text-sm text-gray-700">Use your keyphrase more frequently (1-3% density)</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Action Buttons */}
+                        <div className="flex space-x-3 mt-6">
+                          <button
+                            onClick={() => post && fetchBlogScoring(post._id)}
+                            disabled={scoringLoading}
+                            className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-medium rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 disabled:opacity-50 flex items-center justify-center shadow-md"
+                          >
+                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            {scoringLoading ? 'Analyzing...' : 'Refresh Analysis'}
+                          </button>
+                        </div>
                       </div>
-                      Content Tags
+                    ) : scoringLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <svg className="w-12 h-12 mx-auto text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        <p className="text-gray-500 mb-3">Score analysis unavailable</p>
+                        <button
+                          onClick={() => post && fetchBlogScoring(post._id)}
+                          className="px-4 py-2 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                        >
+                          Analyze Blog
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Tags Section */}
+                  <div className="bg-white rounded-lg shadow-sm p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                      <svg className="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                      </svg>
+                      Tags
                     </h3>
 
                     <div className="flex flex-wrap gap-2">
@@ -2776,14 +3015,12 @@ Best regards,
                   </div>
 
                   {/* Social Media Sharing Section */}
-                  <div className="bg-gradient-to-br from-white to-indigo-50 rounded-2xl shadow-lg p-6 border border-indigo-100">
+                  <div className="bg-white rounded-lg shadow-sm p-6">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                      <div className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center mr-3 shadow">
-                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
-                        </svg>
-                      </div>
-                      Share & Promote
+                      <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                      </svg>
+                      Share on Social Media
                     </h3>
 
                     <div className="space-y-3">
@@ -2952,74 +3189,46 @@ Best regards,
                   </div>
 
                   {/* Quick Stats Section */}
-                  <div className="bg-gradient-to-br from-white to-green-50 rounded-2xl shadow-lg p-6 border border-green-100">
+                  <div className="bg-white rounded-lg shadow-sm p-6">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                      <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-green-600 rounded-lg flex items-center justify-center mr-3 shadow">
-                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                        </svg>
-                      </div>
-                      Post Analytics
+                      <svg className="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Quick Stats
                     </h3>
 
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="bg-white rounded-lg p-3 border border-gray-200">
-                        <div className="flex items-center justify-between mb-1">
-                          <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          <span className="text-lg font-bold text-gray-900">{Math.ceil(post.wordCount / 200)}</span>
-                        </div>
-                        <span className="text-xs text-gray-600">Min Read</span>
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">Reading Time</span>
+                        <span className="text-sm font-medium text-gray-900">
+                          {Math.ceil(post.wordCount / 200)} min
+                        </span>
                       </div>
-                      
-                      <div className="bg-white rounded-lg p-3 border border-gray-200">
-                        <div className="flex items-center justify-between mb-1">
-                          <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                          </svg>
-                          <span className="text-lg font-bold text-gray-900">{post.wordCount.toLocaleString()}</span>
-                        </div>
-                        <span className="text-xs text-gray-600">Words</span>
-                      </div>
-                      
-                      <div className="bg-white rounded-lg p-3 border border-gray-200">
-                        <div className="flex items-center justify-between mb-1">
-                          <svg className="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          <span className="text-lg font-bold text-gray-900">
-                            {(() => {
-                              const imageCount = (post.content.match(/!\[([^\]]*)\]\(([^)]+)\)/g) || []).length;
-                              return imageCount;
-                            })()}
-                          </span>
-                        </div>
-                        <span className="text-xs text-gray-600">Images</span>
-                      </div>
-                      
-                      <div className="bg-white rounded-lg p-3 border border-gray-200">
-                        <div className="flex items-center justify-between mb-1">
-                          <svg className="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                          </svg>
-                          <span className="text-lg font-bold text-gray-900 capitalize">{post.detailLevel[0]}</span>
-                        </div>
-                        <span className="text-xs text-gray-600">{post.detailLevel} Detail</span>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-4 pt-4 border-t border-gray-200">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600">Content Type</span>
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">Content Type</span>
+                        <span className="text-sm font-medium text-gray-900">
                           {post.contentAnalysis.contentType}
                         </span>
                       </div>
-                      <div className="flex items-center justify-between text-sm mt-2">
-                        <span className="text-gray-600">Last Updated</span>
-                        <span className="text-gray-900 font-medium">
-                          {new Date(post.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">Images</span>
+                        <span className="text-sm font-medium text-gray-900">
+                          {(() => {
+                            const imageCount = (post.content.match(/!\[([^\]]*)\]\(([^)]+)\)/g) || []).length;
+                            return imageCount > 0 ? `${imageCount} images` : 'No images';
+                          })()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">Detail Level</span>
+                        <span className="text-sm font-medium text-gray-900 capitalize">
+                          {post.detailLevel}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">Last Updated</span>
+                        <span className="text-sm font-medium text-gray-900">
+                          {new Date(post.updatedAt).toLocaleDateString()}
                         </span>
                       </div>
                     </div>

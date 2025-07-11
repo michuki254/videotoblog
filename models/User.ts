@@ -59,8 +59,7 @@ const UserSchema = new mongoose.Schema({
 })
 
 // Indexes
-UserSchema.index({ clerkId: 1 })
-UserSchema.index({ email: 1 })
+// clerkId and email already have indexes from unique: true
 UserSchema.index({ role: 1 })
 UserSchema.index({ createdAt: -1 })
 

@@ -19,6 +19,10 @@ export interface IBlogPost extends Document {
   screenshots?: mongoose.Types.ObjectId[]
   hasTableOfContents: boolean
   detailLevel: string
+  urlSlug?: string
+  metaTitle?: string
+  metaDescription?: string
+  tags?: string[]
   wordpress?: {
     postId: number
     url: string
@@ -110,6 +114,19 @@ const BlogPostSchema = new Schema<IBlogPost>({
     type: String,
     required: true,
   },
+  urlSlug: {
+    type: String,
+    index: true,
+  },
+  metaTitle: {
+    type: String,
+  },
+  metaDescription: {
+    type: String,
+  },
+  tags: [{
+    type: String,
+  }],
   wordpress: {
     postId: { type: Number },
     url: { type: String },
