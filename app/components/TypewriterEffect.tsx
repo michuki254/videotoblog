@@ -3,45 +3,110 @@
 import { useEffect, useState } from 'react'
 
 interface TypewriterEffectProps {
-  text: string
+  words?: string[]
+  text?: string
   speed?: number
+  deletingSpeed?: number
+  pauseDuration?: number
   onComplete?: () => void
   onTextUpdate?: (text: string) => void
   className?: string
+  loop?: boolean
 }
 
 export default function TypewriterEffect({ 
+  words,
   text, 
-  speed = 30, 
+  speed = 50, 
+  deletingSpeed = 30,
+  pauseDuration = 2000,
   onComplete,
   onTextUpdate,
-  className = ''
+  className = '',
+  loop = true
 }: TypewriterEffectProps) {
   const [displayedText, setDisplayedText] = useState('')
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [currentWordIndex, setCurrentWordIndex] = useState(0)
+  const [isDeleting, setIsDeleting] = useState(false)
 
-  useEffect(() => {
-    if (currentIndex < text.length) {
+  // Handle single text mode
+  if (text && !words) {
+    useEffect(() => {
+      if (currentIndex < text.length) {
+        const timeout = setTimeout(() => {
+          const newText = displayedText + text[currentIndex]
+          setDisplayedText(newText)
+          setCurrentIndex(prev => prev + 1)
+          if (onTextUpdate) {
+            onTextUpdate(newText)
+          }
+        }, speed)
+
+        return () => clearTimeout(timeout)
+      } else if (onComplete && currentIndex === text.length) {
+        onComplete()
+      }
+    }, [currentIndex, text, speed, onComplete, displayedText, onTextUpdate])
+
+    // Reset when text changes
+    useEffect(() => {
+      setDisplayedText('')
+      setCurrentIndex(0)
+    }, [text])
+
+    return <span className={className}>{displayedText}<span className="animate-pulse">|</span></span>
+  }
+
+  // Handle multiple words mode
+  if (words && words.length > 0) {
+    useEffect(() => {
+      const currentWord = words[currentWordIndex]
+      
       const timeout = setTimeout(() => {
-        const newText = displayedText + text[currentIndex]
-        setDisplayedText(newText)
-        setCurrentIndex(prev => prev + 1)
-        if (onTextUpdate) {
-          onTextUpdate(newText)
+        if (!isDeleting) {
+          // Typing
+          if (displayedText !== currentWord) {
+            const newText = currentWord.slice(0, displayedText.length + 1)
+            setDisplayedText(newText)
+            if (onTextUpdate) {
+              onTextUpdate(newText)
+            }
+          } else {
+            // Finished typing, pause then start deleting
+            setTimeout(() => setIsDeleting(true), pauseDuration)
+          }
+        } else {
+          // Deleting
+          if (displayedText !== '') {
+            const newText = displayedText.slice(0, -1)
+            setDisplayedText(newText)
+            if (onTextUpdate) {
+              onTextUpdate(newText)
+            }
+          } else {
+            // Finished deleting, move to next word
+            setIsDeleting(false)
+            const nextIndex = (currentWordIndex + 1) % words.length
+            setCurrentWordIndex(nextIndex)
+            
+            if (nextIndex === 0 && !loop && onComplete) {
+              onComplete()
+            }
+          }
         }
-      }, speed)
+      }, isDeleting ? deletingSpeed : speed)
 
       return () => clearTimeout(timeout)
-    } else if (onComplete && currentIndex === text.length) {
-      onComplete()
-    }
-  }, [currentIndex, text, speed, onComplete, displayedText, onTextUpdate])
+    }, [displayedText, isDeleting, currentWordIndex, words, speed, deletingSpeed, pauseDuration, onTextUpdate, loop, onComplete])
 
-  // Reset when text changes
-  useEffect(() => {
-    setDisplayedText('')
-    setCurrentIndex(0)
-  }, [text])
+    return (
+      <span className={className}>
+        {displayedText}
+        <span className="animate-pulse">|</span>
+      </span>
+    )
+  }
 
-  return null // We'll use the onTextUpdate callback instead
+  return null
 }

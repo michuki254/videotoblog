@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import { ClerkProvider } from '@clerk/nextjs'
 import ToastProvider from './components/ToastProvider'
+import { AnalyticsProvider, ErrorBoundary } from '@/components/AnalyticsProvider'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -37,12 +38,16 @@ export default function RootLayout({
 }) {
   return (
     <ClerkProvider>
-    <html lang="en" className="scroll-smooth">
-      <body className={inter.className}>
-        <ToastProvider />
-        {children}
-      </body>
-    </html>
+      <html lang="en" className="scroll-smooth">
+        <body className={inter.className}>
+          <ErrorBoundary>
+            <AnalyticsProvider>
+              <ToastProvider />
+              {children}
+            </AnalyticsProvider>
+          </ErrorBoundary>
+        </body>
+      </html>
     </ClerkProvider>
   )
 }

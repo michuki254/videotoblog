@@ -14,6 +14,7 @@
     "@heroicons/react": "^2.2.0",
     "@lemonsqueezy/lemonsqueezy.js": "^4.0.0",
     "@radix-ui/react-tabs": "^1.1.12",
+    "@sentry/nextjs": "^9.38.0",
     "@types/jszip": "^3.4.0",
     "axios": "^1.7.9",
     "googleapis": "^144.0.0",
