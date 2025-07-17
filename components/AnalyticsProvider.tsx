@@ -1,12 +1,12 @@
 'use client'
 
-import React, { useEffect } from 'react'
+import React, { useEffect, Suspense } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { useUser } from '@clerk/nextjs'
 import { analytics } from '@/lib/analytics'
 import { errorMonitoring } from '@/lib/monitoring'
 
-export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
+function AnalyticsProviderInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const { user } = useUser()
@@ -48,6 +48,14 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
   }, [user])
 
   return <>{children}</>
+}
+
+export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={<>{children}</>}>
+      <AnalyticsProviderInner>{children}</AnalyticsProviderInner>
+    </Suspense>
+  )
 }
 
 // Error boundary for catching React errors

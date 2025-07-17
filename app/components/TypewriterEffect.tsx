@@ -31,36 +31,34 @@ export default function TypewriterEffect({
   const [isDeleting, setIsDeleting] = useState(false)
 
   // Handle single text mode
-  if (text && !words) {
-    useEffect(() => {
-      if (currentIndex < text.length) {
-        const timeout = setTimeout(() => {
-          const newText = displayedText + text[currentIndex]
-          setDisplayedText(newText)
-          setCurrentIndex(prev => prev + 1)
-          if (onTextUpdate) {
-            onTextUpdate(newText)
-          }
-        }, speed)
+  useEffect(() => {
+    if (text && !words && currentIndex < text.length) {
+      const timeout = setTimeout(() => {
+        const newText = displayedText + text[currentIndex]
+        setDisplayedText(newText)
+        setCurrentIndex(prev => prev + 1)
+        if (onTextUpdate) {
+          onTextUpdate(newText)
+        }
+      }, speed)
 
-        return () => clearTimeout(timeout)
-      } else if (onComplete && currentIndex === text.length) {
-        onComplete()
-      }
-    }, [currentIndex, text, speed, onComplete, displayedText, onTextUpdate])
+      return () => clearTimeout(timeout)
+    } else if (text && !words && onComplete && currentIndex === text.length) {
+      onComplete()
+    }
+  }, [currentIndex, text, speed, onComplete, displayedText, onTextUpdate, words])
 
-    // Reset when text changes
-    useEffect(() => {
+  // Reset when text changes
+  useEffect(() => {
+    if (text && !words) {
       setDisplayedText('')
       setCurrentIndex(0)
-    }, [text])
-
-    return <span className={className}>{displayedText}<span className="animate-pulse">|</span></span>
-  }
+    }
+  }, [text, words])
 
   // Handle multiple words mode
-  if (words && words.length > 0) {
-    useEffect(() => {
+  useEffect(() => {
+    if (words && words.length > 0) {
       const currentWord = words[currentWordIndex]
       
       const timeout = setTimeout(() => {
@@ -98,8 +96,15 @@ export default function TypewriterEffect({
       }, isDeleting ? deletingSpeed : speed)
 
       return () => clearTimeout(timeout)
-    }, [displayedText, isDeleting, currentWordIndex, words, speed, deletingSpeed, pauseDuration, onTextUpdate, loop, onComplete])
+    }
+  }, [displayedText, isDeleting, currentWordIndex, words, speed, deletingSpeed, pauseDuration, onTextUpdate, loop, onComplete])
 
+  // Render based on mode
+  if (text && !words) {
+    return <span className={className}>{displayedText}<span className="animate-pulse">|</span></span>
+  }
+
+  if (words && words.length > 0) {
     return (
       <span className={className}>
         {displayedText}

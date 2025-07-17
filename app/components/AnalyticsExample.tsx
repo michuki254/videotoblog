@@ -4,7 +4,7 @@ import { useAnalytics, useInteractionTracking } from '@/hooks/useAnalytics'
 
 // Example component showing how to use analytics
 export function AnalyticsExample() {
-  const { trackEvent, trackConversion } = useAnalytics()
+  const { trackEvent, trackConversion, trackException } = useAnalytics()
   const { trackClick, trackFormSubmit } = useInteractionTracking()
 
   const handleButtonClick = () => {
@@ -33,7 +33,6 @@ export function AnalyticsExample() {
       trackFormSubmit('contact_form', false)
       
       // Also track the error
-      const { trackException } = useAnalytics()
       trackException(error as Error)
     }
   }
