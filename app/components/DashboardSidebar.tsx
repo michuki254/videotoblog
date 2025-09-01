@@ -11,7 +11,8 @@ import {
   Bars3Icon,
   XMarkIcon,
   ArrowRightOnRectangleIcon,
-  SparklesIcon
+  SparklesIcon,
+  ShieldCheckIcon
 } from '@heroicons/react/24/outline'
 import { useAuth } from '@clerk/nextjs'
 
@@ -91,7 +92,7 @@ export default function DashboardSidebar({ isSidebarOpen, setIsSidebarOpen, user
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                 )}
@@ -126,14 +127,14 @@ export default function DashboardSidebar({ isSidebarOpen, setIsSidebarOpen, user
                   >
                     <item.icon
                       className={`
-                        mr-4 flex-shrink-0 h-6 w-6 transition-colors duration-200
+                        mr-3 flex-shrink-0 h-5 w-5 transition-colors duration-200
                         ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'}
                       `}
                     aria-hidden="true"
                   />
                     {item.name}
                     {isActive && (
-                      <div className="ml-auto w-2 h-2 bg-white rounded-full opacity-75"></div>
+                      <div className="ml-auto w-1.5 h-1.5 bg-blue-600 rounded-full"></div>
                     )}
               </Link>
                 )
@@ -142,7 +143,7 @@ export default function DashboardSidebar({ isSidebarOpen, setIsSidebarOpen, user
             </div>
             
           {/* Bottom Navigation */}
-          <div className="flex-shrink-0 border-t border-slate-700/50 p-4">
+          <div className="flex-shrink-0 border-t border-gray-200 p-4">
             <nav className="space-y-2">
               {secondaryNavigation.map((item) => {
                 const isActive = pathname === item.href
@@ -210,36 +211,36 @@ export default function DashboardSidebar({ isSidebarOpen, setIsSidebarOpen, user
         {isSidebarOpen && (
           <div className="fixed inset-0 flex z-50">
             <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm" onClick={() => setIsSidebarOpen(false)} />
-            <div className="relative flex-1 flex flex-col max-w-xs w-full bg-gradient-to-b from-slate-900 to-slate-800 shadow-2xl">
+            <div className="relative flex-1 flex flex-col max-w-xs w-full bg-white shadow-2xl">
               <div className="absolute top-0 right-0 -mr-12 pt-4">
                 <button
-                  className="ml-1 flex items-center justify-center h-12 w-12 rounded-xl bg-slate-800/80 backdrop-blur focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white transition-all duration-200"
+                  className="ml-1 flex items-center justify-center h-10 w-10 rounded-lg bg-white shadow-md focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-all duration-200"
                   onClick={() => setIsSidebarOpen(false)}
                 >
                   <span className="sr-only">Close sidebar</span>
-                  <XMarkIcon className="h-6 w-6 text-white" aria-hidden="true" />
+                  <XMarkIcon className="h-5 w-5 text-gray-600" aria-hidden="true" />
                 </button>
               </div>
               
               {/* Mobile sidebar content */}
               <div className="flex-1 flex flex-col pt-6 pb-4 overflow-y-auto">
                 {/* Logo/Brand Section - Mobile */}
-                <div className="flex items-center flex-shrink-0 px-6 pb-6 border-b border-slate-700/50">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg">
+                <div className="flex items-center flex-shrink-0 px-6 pb-6 border-b border-gray-200">
+                  <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
                   </div>
                   <div className="ml-4">
-                    <h2 className="text-xl font-bold text-white">VideotoBlog</h2>
-                    <p className="text-sm text-slate-300">AI Platform</p>
+                    <h2 className="text-lg font-bold text-gray-900">VideotoBlog</h2>
+                    <p className="text-xs text-gray-500">AI Platform</p>
                   </div>
                 </div>
 
                 {/* User Profile Section - Mobile */}
-                <div className="px-6 py-4 border-b border-slate-700/50">
+                <div className="px-6 py-4 border-b border-gray-200">
                   <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center overflow-hidden shadow-lg">
+                    <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
                       {user?.imageUrl ? (
                         <img 
                           src={user.imageUrl} 
@@ -247,16 +248,16 @@ export default function DashboardSidebar({ isSidebarOpen, setIsSidebarOpen, user
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-white truncate">
+                      <p className="text-sm font-semibold text-gray-900 truncate">
                         {user?.firstName || 'Welcome!'}
                       </p>
-                      <p className="text-xs text-slate-300 truncate">
+                      <p className="text-xs text-gray-500 truncate">
                         {user?.emailAddresses?.[0]?.emailAddress || 'User'}
                       </p>
                     </div>
@@ -282,14 +283,14 @@ export default function DashboardSidebar({ isSidebarOpen, setIsSidebarOpen, user
                   >
                         <item.icon
                           className={`
-                            mr-4 flex-shrink-0 h-6 w-6 transition-colors duration-200
+                            mr-3 flex-shrink-0 h-5 w-5 transition-colors duration-200
                             ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'}
                           `}
                       aria-hidden="true"
                     />
                         {item.name}
                         {isActive && (
-                          <div className="ml-auto w-2 h-2 bg-white rounded-full opacity-75"></div>
+                          <div className="ml-auto w-1.5 h-1.5 bg-blue-600 rounded-full"></div>
                         )}
                   </Link>
                     )
@@ -298,7 +299,7 @@ export default function DashboardSidebar({ isSidebarOpen, setIsSidebarOpen, user
               </div>
               
               {/* Bottom Navigation - Mobile */}
-              <div className="flex-shrink-0 border-t border-slate-700/50 p-4">
+              <div className="flex-shrink-0 border-t border-gray-200 p-4">
                 <nav className="space-y-2">
                   {secondaryNavigation.map((item) => {
                     const isActive = pathname === item.href
@@ -338,10 +339,10 @@ export default function DashboardSidebar({ isSidebarOpen, setIsSidebarOpen, user
                           action.onClick()
                           setIsSidebarOpen(false)
                         }}
-                        className="w-full group flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 ease-in-out text-red-300 hover:text-red-100 hover:bg-red-900/20"
+                        className="w-full group flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ease-in-out text-red-600 hover:text-red-700 hover:bg-red-50"
                       >
                         <action.icon
-                          className="mr-4 flex-shrink-0 h-5 w-5 transition-colors duration-200 text-red-400 group-hover:text-red-200"
+                          className="mr-3 flex-shrink-0 h-5 w-5 transition-colors duration-200 text-red-500 group-hover:text-red-600"
                       aria-hidden="true"
                     />
                         {action.name}

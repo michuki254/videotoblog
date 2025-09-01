@@ -208,7 +208,7 @@ export default function DashboardUpgradePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-indigo-50">
+    <div className="min-h-screen bg-gray-50">
       <div className="flex">
         <DashboardSidebar 
           isSidebarOpen={isSidebarOpen} 
@@ -239,13 +239,13 @@ export default function DashboardUpgradePage() {
           <div className="relative">
             <div className="relative">
             {/* Hero Section */}
-            <div className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 px-4 py-16 sm:px-6 lg:px-8">
+            <div className="relative overflow-hidden bg-blue-600 px-4 py-8 sm:py-12 sm:px-6 lg:px-8">
               <div className="absolute inset-0 bg-grid-white/[0.2] [mask-image:radial-gradient(white,transparent_70%)]"></div>
               <div className="relative mx-auto max-w-7xl text-center">
-                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4">
                   <span className="block">Choose Your Perfect Plan</span>
                 </h1>
-                <p className="text-xl text-indigo-100 max-w-3xl mx-auto mb-8">
+                <p className="text-sm sm:text-base text-blue-100 max-w-3xl mx-auto mb-6">
                   Transform your videos into engaging blog posts with our AI-powered platform. 
                   Select the plan that fits your content creation needs.
                 </p>
@@ -320,7 +320,7 @@ export default function DashboardUpgradePage() {
                   {currentSubscription && 
                    (currentSubscription.status === 'active' || currentSubscription.status === 'on_trial') &&
                    currentSubscription.plan !== 'FREE' && (
-                    <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl">
+                    <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                       <p className="text-sm text-blue-800 flex items-start">
                         <svg className="h-5 w-5 text-blue-600 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
@@ -336,8 +336,8 @@ export default function DashboardUpgradePage() {
             )}
 
             {/* Pricing Cards */}
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-24">
-              <div className="grid lg:grid-cols-4 gap-6 mt-12">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-12">
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
                 {plans.map((plan, index) => {
                   const isCurrentPlan = currentSubscription?.plan === plan.id
                   const hasActiveSubscription = currentSubscription && 
@@ -353,7 +353,7 @@ export default function DashboardUpgradePage() {
                       {/* Badge */}
                       {plan.badge && (
                         <div className="absolute -top-5 left-0 right-0 flex justify-center">
-                          <span className="inline-flex items-center rounded-full bg-gradient-to-r from-purple-600 to-pink-600 px-4 py-1.5 text-xs font-semibold text-white shadow-lg">
+                          <span className="inline-flex items-center rounded-full bg-purple-600 px-3 py-1 text-xs font-semibold text-white shadow-lg">
                             <StarIcon className="h-3 w-3 mr-1" />
                             {plan.badge}
                           </span>
@@ -366,19 +366,19 @@ export default function DashboardUpgradePage() {
                           : 'border-gray-200 hover:border-gray-300 hover:shadow-xl'
                       } ${isCurrentPlan ? 'ring-4 ring-indigo-600 ring-opacity-50' : ''}`}>
                         {/* Card Header */}
-                        <div className={`p-8 ${
+                        <div className={`p-4 sm:p-6 ${
                           plan.color === 'purple' 
-                            ? 'bg-gradient-to-br from-purple-600 to-pink-600 text-white' 
+                            ? 'bg-purple-600 text-white' 
                             : plan.color === 'blue'
-                            ? 'bg-gradient-to-br from-blue-600 to-indigo-600 text-white'
+                            ? 'bg-blue-600 text-white'
                             : plan.color === 'gold'
-                            ? 'bg-gradient-to-br from-yellow-600 to-orange-600 text-white'
+                            ? 'bg-orange-600 text-white'
                             : 'bg-gray-50'
                         }`}>
                           <div className="flex items-center justify-between mb-4">
                             <div>
-                              <span className="text-5xl">{plan.icon}</span>
-                              <h3 className={`text-2xl font-bold mt-2 ${plan.color === 'gray' ? 'text-gray-900' : ''}`}>
+                              <span className="text-3xl sm:text-4xl">{plan.icon}</span>
+                              <h3 className={`text-lg sm:text-xl font-bold mt-2 ${plan.color === 'gray' ? 'text-gray-900' : ''}`}>
                                 {plan.name}
                               </h3>
                             </div>
@@ -396,7 +396,7 @@ export default function DashboardUpgradePage() {
                           <div className="mt-6">
                             {billingPeriod === 'yearly' && price > 0 ? (
                               <div>
-                                <span className={`text-5xl font-bold ${plan.color === 'gray' ? 'text-gray-900' : ''}`}>
+                                <span className={`text-2xl sm:text-3xl font-bold ${plan.color === 'gray' ? 'text-gray-900' : ''}`}>
                                   ${(price / 12).toFixed(2)}
                                 </span>
                                 <span className={`text-sm ml-2 ${plan.color === 'gray' ? 'text-gray-600' : 'text-white/80'}`}>
@@ -408,7 +408,7 @@ export default function DashboardUpgradePage() {
                               </div>
                             ) : (
                               <>
-                                <span className={`text-5xl font-bold ${plan.color === 'gray' ? 'text-gray-900' : ''}`}>
+                                <span className={`text-2xl sm:text-3xl font-bold ${plan.color === 'gray' ? 'text-gray-900' : ''}`}>
                                   ${price}
                                 </span>
                                 {price > 0 && (
@@ -422,8 +422,8 @@ export default function DashboardUpgradePage() {
                         </div>
 
                         {/* Features */}
-                        <div className="p-8 bg-white">
-                          <ul className="space-y-4">
+                        <div className="p-4 sm:p-6 bg-white">
+                          <ul className="space-y-2 sm:space-y-3">
                             {plan.features.map((feature, featureIndex) => (
                               <li key={featureIndex} className="flex items-start">
                                 {feature.included ? (
@@ -442,7 +442,7 @@ export default function DashboardUpgradePage() {
                           </ul>
 
                           {/* CTA Button */}
-                          <div className="mt-8">
+                          <div className="mt-6">
                             {isCurrentPlan ? (
                               <div className="w-full bg-gray-100 text-gray-500 py-3 px-4 rounded-xl text-center font-medium">
                                 Current Plan
@@ -460,11 +460,11 @@ export default function DashboardUpgradePage() {
                                 disabled={upgrading === plan.id || plan.id === 'FREE'}
                                 className={`w-full py-3 px-4 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 ${
                                   plan.popular
-                                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-700 hover:to-pink-700 shadow-lg'
+                                    ? 'bg-purple-600 text-white hover:bg-purple-700 shadow-lg'
                                     : plan.color === 'blue'
-                                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700'
+                                    ? 'bg-blue-600 text-white hover:bg-blue-700'
                                     : plan.color === 'gold'
-                                    ? 'bg-gradient-to-r from-yellow-600 to-orange-600 text-white hover:from-yellow-700 hover:to-orange-700 shadow-lg'
+                                    ? 'bg-orange-600 text-white hover:bg-orange-700 shadow-lg'
                                     : 'bg-gray-900 text-white hover:bg-gray-800'
                                 } disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none`}
                               >
@@ -494,10 +494,10 @@ export default function DashboardUpgradePage() {
               </div>
 
               {/* Features Comparison */}
-              <div className="mt-24">
-                <div className="text-center mb-12">
-                  <h2 className="text-3xl font-bold text-gray-900">Compare Plans</h2>
-                  <p className="mt-4 text-lg text-gray-600">See which features are included in each plan</p>
+              <div className="mt-12 sm:mt-16">
+                <div className="text-center mb-8">
+                  <h2 className="text-2xl font-bold text-gray-900">Compare Plans</h2>
+                  <p className="mt-2 text-sm sm:text-base text-gray-600">See which features are included in each plan</p>
                 </div>
 
                 <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
@@ -552,9 +552,9 @@ export default function DashboardUpgradePage() {
               </div>
 
               {/* FAQs */}
-              <div className="mt-24 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl p-8 lg:p-12">
-                <div className="text-center mb-8">
-                  <h2 className="text-3xl font-bold text-gray-900">Frequently Asked Questions</h2>
+              <div className="mt-12 bg-gray-100 rounded-xl p-6 sm:p-8">
+                <div className="text-center mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900">Frequently Asked Questions</h2>
                 </div>
                 <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
                   <div>

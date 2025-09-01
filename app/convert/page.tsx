@@ -280,41 +280,36 @@ export default function ConvertPage() {
 
   return (
     <DashboardLayout>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-indigo-50">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-12">
+      <div className="min-h-screen bg-gray-50">
+        <div className="mx-auto max-w-6xl px-3 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
           
-          {/* Hero Section */}
-          <div className="text-center mb-12 animate-fade-in">
-            <div className="inline-flex items-center justify-center p-2 bg-indigo-100 rounded-full mb-4">
-              <svg className="h-8 w-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          {/* Compact Hero Section */}
+          <div className="text-center mb-3 sm:mb-4">
+            <div className="flex items-center justify-center gap-2">
+              <svg className="h-5 w-5 sm:h-6 sm:w-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
               </svg>
+              <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">
+                Video to Blog Converter
+              </h1>
             </div>
-            <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4">
-              <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                Transform Videos into Engaging Blog Posts
-              </span>
-            </h1>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Powered by advanced AI to create SEO-optimized, compelling content from any YouTube video
+            <p className="text-xs sm:text-sm text-gray-600 mt-1">
+              AI-powered SEO content from YouTube videos
             </p>
           </div>
 
           {/* Main Form Card */}
-          <div className="bg-white shadow-2xl rounded-2xl overflow-hidden transform transition-all duration-500 hover:shadow-3xl">
+          <div className="bg-white shadow-sm rounded-lg sm:rounded-xl overflow-hidden">
             
-            {/* Quick Actions Bar */}
-            <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-6">
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="flex items-center space-x-3">
-                  <div className="bg-white/20 backdrop-blur-sm rounded-lg p-2">
-                    <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                  </div>
+            {/* Compact Quick Actions Bar */}
+            <div className="bg-indigo-600 p-3 sm:p-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4">
+                <div className="flex items-center space-x-2">
+                  <svg className="h-4 w-4 sm:h-5 sm:w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
                   <div className="text-white">
-                    <h2 className="text-lg font-semibold">Quick Convert</h2>
-                    <p className="text-sm text-indigo-100">Start with just a URL</p>
+                    <h2 className="text-sm sm:text-base font-semibold">Quick Convert</h2>
                   </div>
                 </div>
                 

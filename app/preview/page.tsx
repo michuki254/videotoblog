@@ -443,7 +443,7 @@ Consider exploring related topics and implementing the strategies discussed to m
     const overallProgress = (currentStep / conversionSteps.length) * 100;
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
+      <div className="min-h-screen bg-gray-50">
         <DashboardSidebar 
           isSidebarOpen={isSidebarOpen} 
           setIsSidebarOpen={setIsSidebarOpen} 
@@ -462,10 +462,10 @@ Consider exploring related topics and implementing the strategies discussed to m
               {/* Sidebar with live conversion status */}
             <div className="lg:col-span-1">
               <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 sticky top-8 overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 pointer-events-none"></div>
+                <div className="absolute inset-0 bg-blue-50/30 pointer-events-none"></div>
                 <div className="relative">
                   <div className="flex items-center mb-6">
-                    <div className="h-10 w-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center mr-3">
+                    <div className="h-10 w-10 bg-blue-600 rounded-lg flex items-center justify-center mr-3">
                       <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                       </svg>
@@ -477,11 +477,11 @@ Consider exploring related topics and implementing the strategies discussed to m
                 <div className="mb-6">
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-sm font-medium text-gray-700">Overall Progress</span>
-                    <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">{Math.round(overallProgress)}%</span>
+                    <span className="text-2xl font-bold text-blue-600">{Math.round(overallProgress)}%</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
                     <div 
-                      className="h-full rounded-full transition-all duration-500 ease-out bg-gradient-to-r from-blue-500 to-indigo-600"
+                      className="h-full rounded-full transition-all duration-500 ease-out bg-blue-600"
                       style={{ width: `${overallProgress}%` }}
                     ></div>
                   </div>
@@ -533,7 +533,7 @@ Consider exploring related topics and implementing the strategies discussed to m
                 </div>
 
                 {/* Current Status */}
-                <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
+                <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                   <div className="flex items-center">
                     <div className="relative">
                       <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-200 border-t-blue-600 mr-3"></div>
@@ -555,7 +555,7 @@ Consider exploring related topics and implementing the strategies discussed to m
             <div className="lg:col-span-3">
               <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
                 {/* Header */}
-                <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 p-8">
+                <div className="bg-gray-100 border-b border-gray-200 p-8">
                   <div className="flex items-center justify-between">
                     <div>
                       <h2 className="text-2xl font-bold text-gray-900">
@@ -579,8 +579,8 @@ Consider exploring related topics and implementing the strategies discussed to m
 
                 {/* Blog post header */}
                 {tempBlogData?.thumbnail && (
-                  <div className="relative w-full h-64 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent z-10"></div>
+                  <div className="relative w-full h-64 bg-gray-200 overflow-hidden">
+                    <div className="absolute inset-0 bg-black/30 z-10"></div>
                     <Image
                       src={tempBlogData.thumbnail}
                       alt="Blog post thumbnail"
@@ -661,7 +661,7 @@ Consider exploring related topics and implementing the strategies discussed to m
 
   if (!blogData) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
+      <div className="min-h-screen bg-gray-50">
         <DashboardSidebar 
           isSidebarOpen={isSidebarOpen} 
           setIsSidebarOpen={setIsSidebarOpen} 
@@ -671,7 +671,7 @@ Consider exploring related topics and implementing the strategies discussed to m
         <div className="lg:pl-72 flex items-center justify-center min-h-screen">
         <div className="text-center max-w-md mx-auto px-4">
           <div className="bg-white rounded-2xl shadow-xl p-12 border border-gray-100">
-            <div className="w-20 h-20 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full flex items-center justify-center mx-auto mb-6">
+            <div className="w-20 h-20 bg-gray-300 rounded-full flex items-center justify-center mx-auto mb-6">
               <svg className="w-10 h-10 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
@@ -680,7 +680,7 @@ Consider exploring related topics and implementing the strategies discussed to m
             <p className="text-gray-600 mb-8">Start by converting a video to create your first blog post.</p>
             <button
               onClick={() => router.push('/convert')}
-              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all transform hover:scale-105 font-medium shadow-lg"
+              className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-all transform hover:scale-105 font-medium shadow-lg"
             >
               Create New Blog Post
             </button>
@@ -703,7 +703,7 @@ Consider exploring related topics and implementing the strategies discussed to m
       
       <div className="lg:pl-72">
       {/* Success Banner */}
-      <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-b border-green-200">
+      <div className="bg-green-50 border-b border-green-200">
           <div className="px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
@@ -739,7 +739,7 @@ Consider exploring related topics and implementing the strategies discussed to m
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-6 gap-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-                <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Blog Post Preview</span>
+                <span className="text-blue-600">Blog Post Preview</span>
               </h1>
               <p className="text-gray-600 mt-1">Review and edit your generated content</p>
             </div>
@@ -755,7 +755,7 @@ Consider exploring related topics and implementing the strategies discussed to m
               </button>
               <button
                 onClick={handleEditPost}
-                className="group bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-5 py-2.5 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all flex items-center gap-2 shadow-lg transform hover:scale-105"
+                className="group bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 transition-all flex items-center gap-2 shadow-lg transform hover:scale-105"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -764,7 +764,7 @@ Consider exploring related topics and implementing the strategies discussed to m
               </button>
               <button
                 onClick={handleNewPost}
-                className="group bg-gradient-to-r from-gray-600 to-gray-700 text-white px-5 py-2.5 rounded-lg hover:from-gray-700 hover:to-gray-800 transition-all flex items-center gap-2 shadow-lg"
+                className="group bg-gray-600 text-white px-5 py-2.5 rounded-lg hover:bg-gray-700 transition-all flex items-center gap-2 shadow-lg"
               >
                 <svg className="w-5 h-5 group-hover:rotate-180 transition-transform duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m-15.355-2A8.001 8.001 0 0020.58 15m0 0H15" />
@@ -782,7 +782,7 @@ Consider exploring related topics and implementing the strategies discussed to m
           <div className="lg:col-span-1">
             <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 sticky top-8">
               <div className="flex items-center mb-6">
-                <div className="h-10 w-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center mr-3">
+                <div className="h-10 w-10 bg-blue-600 rounded-lg flex items-center justify-center mr-3">
                   <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                   </svg>
@@ -791,12 +791,12 @@ Consider exploring related topics and implementing the strategies discussed to m
               </div>
               
               {/* Content Type */}
-              <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg">
+              <div className="mb-6 p-4 bg-blue-50 rounded-lg">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium text-gray-700">Content Type</span>
                   <span className="text-xs text-gray-500 bg-white px-2 py-1 rounded-full">{Math.round(blogData.contentAnalysis.confidence * 100)}% confidence</span>
                 </div>
-                <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md">
+                <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-blue-600 text-white shadow-md">
                   {blogData.contentAnalysis.contentType}
                 </span>
               </div>
@@ -831,7 +831,7 @@ Consider exploring related topics and implementing the strategies discussed to m
                     {blogData.contentAnalysis.keyTopics.map((topic, index) => (
                       <span
                         key={index}
-                        className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 border border-purple-200"
+                        className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 border border-purple-200"
                       >
                         {topic}
                       </span>
@@ -858,8 +858,8 @@ Consider exploring related topics and implementing the strategies discussed to m
             <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
               {/* Blog post header */}
               {blogData.thumbnail && (
-                <div className="relative w-full h-72 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent z-10"></div>
+                <div className="relative w-full h-72 bg-gray-200 overflow-hidden">
+                  <div className="absolute inset-0 bg-black/40 z-10"></div>
                   <Image
                     src={blogData.thumbnail}
                     alt="Blog post thumbnail"
@@ -883,7 +883,7 @@ Consider exploring related topics and implementing the strategies discussed to m
                       ),
                       h2: ({ children }) => (
                         <h2 className="text-3xl font-bold text-gray-900 mt-10 mb-6 leading-tight flex items-center">
-                          <span className="mr-3 h-1 w-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full"></span>
+                          <span className="mr-3 h-1 w-8 bg-blue-600 rounded-full"></span>
                           {children}
                         </h2>
                       ),
@@ -936,15 +936,15 @@ Consider exploring related topics and implementing the strategies discussed to m
                       ),
                       li: ({ children }) => (
                         <li className="text-gray-700 flex items-start">
-                          <span className="mr-3 mt-1.5 h-2 w-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex-shrink-0"></span>
+                          <span className="mr-3 mt-1.5 h-2 w-2 bg-blue-600 rounded-full flex-shrink-0"></span>
                           <span>{children}</span>
                         </li>
                       ),
                       strong: ({ children }) => (
-                        <strong className="font-semibold text-gray-900 bg-gradient-to-r from-blue-50 to-indigo-50 px-1 rounded">{children}</strong>
+                        <strong className="font-semibold text-gray-900 bg-blue-50 px-1 rounded">{children}</strong>
                       ),
                       blockquote: ({ children }) => (
-                        <blockquote className="border-l-4 border-gradient-to-b from-blue-500 to-indigo-600 pl-6 italic text-gray-600 my-8 bg-gradient-to-r from-blue-50 to-indigo-50 py-4 pr-4 rounded-r-lg">
+                        <blockquote className="border-l-4 border-blue-600 pl-6 italic text-gray-600 my-8 bg-blue-50 py-4 pr-4 rounded-r-lg">
                           {children}
                         </blockquote>
                       ),
@@ -952,7 +952,7 @@ Consider exploring related topics and implementing the strategies discussed to m
                         <code className="bg-gray-100 px-2 py-1 rounded text-sm font-mono text-indigo-600">{children}</code>
                       ),
                       pre: ({ children }) => (
-                        <pre className="bg-gradient-to-br from-gray-900 to-gray-800 text-gray-100 p-6 rounded-xl overflow-x-auto text-sm font-mono mb-6 shadow-xl">
+                        <pre className="bg-gray-900 text-gray-100 p-6 rounded-xl overflow-x-auto text-sm font-mono mb-6 shadow-xl">
                           {children}
                         </pre>
                       ),

@@ -833,7 +833,7 @@ export default function SettingsPage() {
 
   return (
     <DashboardLayout>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
+      <div className="min-h-screen bg-gray-50">
         <div className="pb-8">
           <div className="px-4 sm:px-6 lg:px-8">
             {/* Premium Header */}
@@ -862,45 +862,45 @@ export default function SettingsPage() {
             
             <div className="bg-white rounded-lg shadow-sm p-6">
               {/* Premium Hero Section */}
-              <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-2xl shadow-2xl p-8 text-white mb-8">
+              <div className="bg-blue-600 rounded-lg shadow-lg p-4 text-white mb-6">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <h1 className="text-4xl font-bold mb-3 flex items-center">
-                      <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3 mr-4">
-                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                      </div>
-                      Integration Hub
-                    </h1>
-                    <p className="text-blue-100 text-lg">Seamlessly connect and manage all your blogging platforms in one place</p>
+                  <div className="flex items-center">
+                    <div className="bg-white/20 backdrop-blur-sm rounded-lg p-2 mr-3">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h1 className="text-lg sm:text-xl font-bold">Integration Hub</h1>
+                      <p className="text-blue-100 text-xs sm:text-sm hidden sm:block">Connect your blogging platforms</p>
+                    </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm text-blue-100 mb-1">Logged in as</div>
-                    <div className="text-white font-medium bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2">
+                    <div className="text-xs text-blue-100 hidden sm:block">Logged in as</div>
+                    <div className="text-white text-xs sm:text-sm font-medium bg-white/20 backdrop-blur-sm rounded px-2 py-1">
                       {user.emailAddresses[0]?.emailAddress}
                     </div>
                   </div>
                 </div>
                 
-                {/* Stats Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
-                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                    <div className="text-3xl font-bold mb-1">{[savedConfig, savedMediumConfig, savedBloggerConfig, savedGhostConfig, savedWebflowConfig].filter(Boolean).length}</div>
-                    <div className="text-sm text-blue-100">Active Integrations</div>
+                {/* Compact Stats */}
+                <div className="grid grid-cols-4 gap-2 mt-3">
+                  <div className="bg-white/10 backdrop-blur-sm rounded p-2 border border-white/20">
+                    <div className="text-lg font-bold">{[savedConfig, savedMediumConfig, savedBloggerConfig, savedGhostConfig, savedWebflowConfig].filter(Boolean).length}</div>
+                    <div className="text-[10px] text-blue-100">Active</div>
                   </div>
-                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                    <div className="text-3xl font-bold mb-1">5</div>
-                    <div className="text-sm text-blue-100">Platforms Supported</div>
+                  <div className="bg-white/10 backdrop-blur-sm rounded p-2 border border-white/20">
+                    <div className="text-lg font-bold">5</div>
+                    <div className="text-[10px] text-blue-100">Platforms</div>
                   </div>
-                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                    <div className="text-3xl font-bold mb-1">∞</div>
-                    <div className="text-sm text-blue-100">Posts Published</div>
+                  <div className="bg-white/10 backdrop-blur-sm rounded p-2 border border-white/20">
+                    <div className="text-lg font-bold">∞</div>
+                    <div className="text-[10px] text-blue-100">Posts</div>
                   </div>
-                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-                    <div className="text-3xl font-bold mb-1">API</div>
-                    <div className="text-sm text-blue-100">Ready to Use</div>
+                  <div className="bg-white/10 backdrop-blur-sm rounded p-2 border border-white/20">
+                    <div className="text-lg font-bold">API</div>
+                    <div className="text-[10px] text-blue-100">Ready</div>
                   </div>
                 </div>
               </div>
@@ -908,52 +908,52 @@ export default function SettingsPage() {
           </div>
 
           {/* Premium Active Integrations Card */}
-          <div className="mb-8 bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl p-6 border border-gray-200 shadow-lg">
-            <div className="flex items-center mb-4">
-              <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg p-2 mr-3">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="mb-4 bg-gray-100 rounded-lg p-3 border border-gray-200">
+            <div className="flex items-center mb-2">
+              <div className="bg-blue-500 rounded p-1 mr-2">
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-bold text-gray-900">Active Integrations</h3>
+              <h3 className="text-sm font-semibold text-gray-900">Active Integrations</h3>
             </div>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-2">
               {savedConfig && (
-                <span className="inline-flex items-center px-4 py-2 rounded-xl text-sm font-medium bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-md hover:shadow-lg transition-shadow">
-                  <CheckCircleIcon className="w-5 h-5 mr-2" />
+                <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium bg-green-500 text-white">
+                  <CheckCircleIcon className="w-3 h-3 mr-1" />
                   WordPress: {wordpressConfig.url}
                 </span>
               )}
               {savedMediumConfig && (
-                <span className="inline-flex items-center px-4 py-2 rounded-xl text-sm font-medium bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-md hover:shadow-lg transition-shadow">
-                  <CheckCircleIcon className="w-5 h-5 mr-2" />
+                <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium bg-purple-500 text-white">
+                  <CheckCircleIcon className="w-3 h-3 mr-1" />
                   Medium: Connected
                 </span>
               )}
               {savedBloggerConfig && (
-                <span className="inline-flex items-center px-4 py-2 rounded-xl text-sm font-medium bg-gradient-to-r from-orange-500 to-red-600 text-white shadow-md hover:shadow-lg transition-shadow">
-                  <CheckCircleIcon className="w-5 h-5 mr-2" />
+                <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium bg-orange-500 text-white">
+                  <CheckCircleIcon className="w-3 h-3 mr-1" />
                   Blogger: {bloggerConfig.blogName || 'Connected'}
                 </span>
               )}
               {savedGhostConfig && (
-                <span className="inline-flex items-center px-4 py-2 rounded-xl text-sm font-medium bg-gradient-to-r from-gray-700 to-gray-900 text-white shadow-md hover:shadow-lg transition-shadow">
-                  <CheckCircleIcon className="w-5 h-5 mr-2" />
+                <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium bg-gray-700 text-white">
+                  <CheckCircleIcon className="w-3 h-3 mr-1" />
                   Ghost: {ghostConfig.blogName || ghostConfig.url}
                 </span>
               )}
               {savedWebflowConfig && (
-                <span className="inline-flex items-center px-4 py-2 rounded-xl text-sm font-medium bg-gradient-to-r from-blue-500 to-cyan-600 text-white shadow-md hover:shadow-lg transition-shadow">
-                  <CheckCircleIcon className="w-5 h-5 mr-2" />
+                <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium bg-blue-500 text-white">
+                  <CheckCircleIcon className="w-3 h-3 mr-1" />
                   Webflow: {webflowConfig.siteName || 'Connected'}
                 </span>
               )}
               {!savedConfig && !savedMediumConfig && !savedBloggerConfig && !savedGhostConfig && !savedWebflowConfig && (
                 <div className="flex items-center text-gray-500">
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
-                  <span className="text-sm font-medium">No integrations configured yet. Click a tab below to get started!</span>
+                  <span className="text-xs">No integrations configured yet</span>
                 </div>
               )}
             </div>
@@ -961,7 +961,7 @@ export default function SettingsPage() {
 
           {/* Premium Tab Navigation */}
           <div className="bg-white rounded-2xl shadow-xl mb-8 overflow-hidden border border-gray-100">
-            <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-1">
+            <div className="bg-gray-100 p-1">
               <nav className="flex overflow-x-auto bg-white rounded-xl">
                 {tabs.map((tab) => (
                   <button
@@ -969,7 +969,7 @@ export default function SettingsPage() {
                     onClick={() => setActiveTab(tab.id)}
                     className={`relative px-6 py-4 text-sm font-semibold whitespace-nowrap transition-all duration-200 ${
                       activeTab === tab.id
-                        ? 'text-white bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg rounded-xl mx-1'
+                        ? 'text-white bg-blue-600 shadow-lg rounded-xl mx-1'
                         : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-xl mx-1'
                     }`}
                   >

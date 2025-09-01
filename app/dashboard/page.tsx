@@ -354,8 +354,8 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <div className="flex">
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
+      <div className="flex relative">
         {/* Sidebar */}
         <DashboardSidebar 
           isSidebarOpen={isSidebarOpen} 
@@ -368,25 +368,27 @@ export default function DashboardPage() {
         />
 
         {/* Main Content */}
-        <div className="flex-1 lg:ml-72">
-          <div className="px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex-1 lg:ml-72 min-w-0 overflow-x-hidden">
+          {/* Mobile Header Spacer for hamburger menu */}
+          <div className="h-16 lg:hidden"></div>
+          <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 max-w-full overflow-x-hidden">
             
             {/* Header Section */}
-            <div className="mb-8">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900">
+            <div className="mb-3 sm:mb-4 md:mb-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3">
+                <div className="w-full sm:w-auto">
+                  <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">
                     Welcome back{user?.firstName ? `, ${user.firstName}` : ''}!
                   </h1>
-                  <p className="text-gray-600 mt-1">
+                  <p className="text-gray-600 mt-1 text-xs sm:text-sm">
                     Here's what's happening with your blog today
                   </p>
                 </div>
                 <Link
                   href="/convert"
-                  className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200"
+                  className="w-full sm:w-auto inline-flex items-center justify-center px-3 sm:px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 text-sm"
                 >
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
                   Convert New Video
@@ -394,237 +396,187 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {/* Compact Stats Grid */}
+            <div className="grid grid-cols-4 gap-1.5 sm:gap-2 mb-3 sm:mb-4">
               {/* Total Posts */}
-              <div className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow p-6 border border-gray-100">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-white rounded-md shadow-sm p-2 sm:p-2.5 border border-gray-100">
+                <div className="flex flex-col">
+                  <div className="flex items-center justify-between mb-0.5">
+                    <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
+                    <span className="text-[8px] font-medium text-green-600 hidden xs:inline">
+                      +{postsThisMonth}
+                    </span>
                   </div>
-                  <span className="text-xs font-medium text-green-600 bg-green-100 px-2 py-1 rounded-full">
-                    +{postsThisMonth} this month
-                  </span>
+                  <h3 className="text-sm sm:text-base font-bold text-gray-900">{posts.length}</h3>
+                  <p className="text-gray-500 text-[9px] sm:text-[10px]">Posts</p>
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900">{posts.length}</h3>
-                <p className="text-gray-600 text-sm mt-1">Total Posts</p>
               </div>
 
               {/* Published */}
-              <div className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow p-6 border border-gray-100">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-white rounded-md shadow-sm p-2 sm:p-2.5 border border-gray-100">
+                <div className="flex flex-col">
+                  <div className="flex items-center justify-between mb-0.5">
+                    <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
+                    <span className="text-[8px] text-gray-400 hidden xs:inline">
+                      {Math.round((publishedCount / posts.length) * 100) || 0}%
+                    </span>
                   </div>
-                  <span className="text-xs font-medium text-gray-500">
-                    {Math.round((publishedCount / posts.length) * 100) || 0}%
-                  </span>
+                  <h3 className="text-sm sm:text-base font-bold text-gray-900">{publishedCount}</h3>
+                  <p className="text-gray-500 text-[9px] sm:text-[10px]">Published</p>
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900">{publishedCount}</h3>
-                <p className="text-gray-600 text-sm mt-1">Published</p>
               </div>
 
               {/* Total Words */}
-              <div className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow p-6 border border-gray-100">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                    <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-white rounded-md shadow-sm p-2 sm:p-2.5 border border-gray-100">
+                <div className="flex flex-col">
+                  <div className="flex items-center justify-between mb-0.5">
+                    <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                     </svg>
+                    <span className="text-[8px] text-gray-400 hidden xs:inline" title={`Average: ${avgWordsPerPost} words`}>
+                      ~{avgWordsPerPost > 999 ? `${(avgWordsPerPost/1000).toFixed(0)}k` : avgWordsPerPost}
+                    </span>
                   </div>
-                  <span className="text-xs font-medium text-gray-500">
-                    ~{avgWordsPerPost} avg
-                  </span>
+                  <h3 className="text-sm sm:text-base font-bold text-gray-900">
+                    {totalWords > 9999 ? `${(totalWords/1000).toFixed(0)}k` : totalWords.toLocaleString()}
+                  </h3>
+                  <p className="text-gray-500 text-[9px] sm:text-[10px]">Words</p>
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900">{totalWords.toLocaleString()}</h3>
-                <p className="text-gray-600 text-sm mt-1">Total Words</p>
               </div>
 
               {/* Drafts */}
-              <div className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow p-6 border border-gray-100">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
-                    <svg className="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-white rounded-md shadow-sm p-2 sm:p-2.5 border border-gray-100">
+                <div className="flex flex-col">
+                  <div className="flex items-center justify-between mb-0.5">
+                    <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                     </svg>
-                  </div>
-                  {draftsCount > 0 && (
-                    <span className="text-xs font-medium text-amber-600 bg-amber-100 px-2 py-1 rounded-full">
-                      Action needed
-                    </span>
-                  )}
-                </div>
-                <h3 className="text-2xl font-bold text-gray-900">{draftsCount}</h3>
-                <p className="text-gray-600 text-sm mt-1">Drafts</p>
-              </div>
-            </div>
-
-            {/* Quick Actions & Folders */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-              {/* Quick Actions */}
-              <div className="lg:col-span-1">
-                <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-                  <div className="space-y-3">
-                    <Link
-                      href="/convert"
-                      className="flex items-center justify-between p-3 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl hover:from-indigo-100 hover:to-purple-100 transition-colors group"
-                    >
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
-                          <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 16h4m10 0h4" />
-                          </svg>
-                        </div>
-                        <span className="font-medium text-gray-900">Convert Video</span>
-                      </div>
-                      <svg className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </Link>
-
-                    <button
-                      onClick={() => setShowCreateFolder(true)}
-                      className="w-full flex items-center justify-between p-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl hover:from-amber-100 hover:to-orange-100 transition-colors group"
-                    >
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
-                          <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-                          </svg>
-                        </div>
-                        <span className="font-medium text-gray-900">Create Folder</span>
-                      </div>
-                      <svg className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </button>
-
                     {draftsCount > 0 && (
-                      <button
-                        onClick={() => setFilter('draft')}
-                        className="w-full flex items-center justify-between p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl hover:from-green-100 hover:to-emerald-100 transition-colors group"
-                      >
-                        <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
-                            <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                            </svg>
-                          </div>
-                          <span className="font-medium text-gray-900">Review Drafts</span>
-                        </div>
-                        <span className="bg-green-600 text-white text-xs font-bold px-2 py-1 rounded-full">{draftsCount}</span>
-                      </button>
+                      <span className="text-[8px] text-amber-600 font-medium hidden xs:inline">
+                        !
+                      </span>
                     )}
                   </div>
-                </div>
-              </div>
-
-              {/* Folders */}
-              <div className="lg:col-span-2">
-                <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold text-gray-900">Folders</h2>
-                    <button
-                      onClick={() => setShowCreateFolder(true)}
-                      className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
-                    >
-                      + New Folder
-                    </button>
-                  </div>
-                  
-                  {folders.length > 0 ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                      <button
-                        onClick={() => setSelectedFolder(null)}
-                        className={`p-3 rounded-xl border-2 transition-all ${
-                          selectedFolder === null 
-                            ? 'border-indigo-600 bg-indigo-50' 
-                            : 'border-gray-200 hover:border-gray-300 bg-white'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-gray-900">All Posts</span>
-                          <span className="text-xs text-gray-500">{posts.length}</span>
-                        </div>
-                      </button>
-
-                      <button
-                        onClick={() => setSelectedFolder('uncategorized')}
-                        className={`p-3 rounded-xl border-2 transition-all ${
-                          selectedFolder === 'uncategorized' 
-                            ? 'border-indigo-600 bg-indigo-50' 
-                            : 'border-gray-200 hover:border-gray-300 bg-white'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-gray-900">Uncategorized</span>
-                          <span className="text-xs text-gray-500">{getPostCountForFolder('uncategorized')}</span>
-                        </div>
-                      </button>
-
-                      {folders.map((folder) => (
-                        <div
-                          key={folder.id}
-                          onClick={() => setSelectedFolder(folder.id === selectedFolder ? null : folder.id)}
-                          className={`p-3 rounded-xl border-2 transition-all relative group cursor-pointer ${
-                            selectedFolder === folder.id 
-                              ? 'border-indigo-600 bg-indigo-50' 
-                              : 'border-gray-200 hover:border-gray-300 bg-white'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-2">
-                              <div 
-                                className="w-3 h-3 rounded-full"
-                                style={{ backgroundColor: folder.color }}
-                              />
-                              <span className="text-sm font-medium text-gray-900 truncate">
-                                {folder.name}
-                              </span>
-                            </div>
-                            <span className="text-xs text-gray-500">{getPostCountForFolder(folder.id)}</span>
-                          </div>
-                          
-                          {/* Delete button */}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              deleteFolder(folder.id);
-                            }}
-                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-red-600"
-                          >
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8">
-                      <svg className="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                      </svg>
-                      <p className="text-gray-500 text-sm">No folders yet</p>
-                      <button
-                        onClick={() => setShowCreateFolder(true)}
-                        className="mt-2 text-sm text-indigo-600 hover:text-indigo-700 font-medium"
-                      >
-                        Create your first folder
-                      </button>
-                    </div>
-                  )}
+                  <h3 className="text-sm sm:text-base font-bold text-gray-900">{draftsCount}</h3>
+                  <p className="text-gray-500 text-[9px] sm:text-[10px]">Drafts</p>
                 </div>
               </div>
             </div>
 
+            {/* Compact Quick Actions Bar */}
+            <div className="bg-white rounded-lg shadow-sm p-2 sm:p-3 border border-gray-100 mb-3">
+              <div className="flex items-center gap-2 overflow-x-auto">
+                <Link
+                  href="/convert"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 rounded-md transition-colors whitespace-nowrap"
+                >
+                  <svg className="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16M17 4v16M3 8h4m10 0h4M3 16h4m10 0h4" />
+                  </svg>
+                  <span className="text-xs font-medium text-gray-900">Convert</span>
+                </Link>
+
+                <button
+                  onClick={() => setShowCreateFolder(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 rounded-md transition-colors whitespace-nowrap"
+                >
+                  <svg className="w-3.5 h-3.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span className="text-xs font-medium text-gray-900">New Folder</span>
+                </button>
+
+                {draftsCount > 0 && (
+                  <button
+                    onClick={() => setFilter('draft')}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 hover:bg-green-100 rounded-md transition-colors whitespace-nowrap"
+                  >
+                    <svg className="w-3.5 h-3.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                    </svg>
+                    <span className="text-xs font-medium text-gray-900">Drafts ({draftsCount})</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Compact Folders Section */}
+            {folders.length > 0 && (
+              <div className="bg-white rounded-lg shadow-sm p-2 sm:p-3 border border-gray-100 mb-3">
+                <div className="flex items-center justify-between mb-2">
+                  <h2 className="text-xs font-semibold text-gray-700">Folders</h2>
+                  <button
+                    onClick={() => setShowCreateFolder(true)}
+                    className="text-[10px] text-indigo-600 hover:text-indigo-700"
+                  >
+                    + Add
+                  </button>
+                </div>
+                  
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <button
+                    onClick={() => setSelectedFolder(null)}
+                    className={`px-2 py-1 rounded-md text-[10px] font-medium transition-all ${
+                      selectedFolder === null 
+                        ? 'bg-indigo-600 text-white' 
+                        : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                    }`}
+                  >
+                    All ({posts.length})
+                  </button>
+
+                  <button
+                    onClick={() => setSelectedFolder('uncategorized')}
+                    className={`px-2 py-1 rounded-md text-[10px] font-medium transition-all ${
+                      selectedFolder === 'uncategorized' 
+                        ? 'bg-indigo-600 text-white' 
+                        : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                    }`}
+                  >
+                    📁 Uncategorized ({getPostCountForFolder('uncategorized')})
+                  </button>
+
+                  {folders.map((folder) => (
+                    <div key={folder.id} className="relative group">
+                      <button
+                        onClick={() => setSelectedFolder(folder.id === selectedFolder ? null : folder.id)}
+                        className={`px-2 py-1 rounded-md text-[10px] font-medium transition-all flex items-center gap-1 ${
+                          selectedFolder === folder.id 
+                            ? 'bg-indigo-600 text-white' 
+                            : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                        }`}
+                      >
+                        <span 
+                          className="w-1.5 h-1.5 rounded-full"
+                          style={{ backgroundColor: folder.color }}
+                        />
+                        <span>{folder.name} ({getPostCountForFolder(folder.id)})</span>
+                      </button>
+                      
+                      {/* Delete button */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteFolder(folder.id);
+                        }}
+                        className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center hover:bg-red-600"
+                      >
+                        <svg className="w-2 h-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Posts Section */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
+            <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-100">
               {/* Posts Header */}
               <div className="p-6 border-b border-gray-100">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -638,13 +590,13 @@ export default function DashboardPage() {
                   
                   <div className="flex flex-col sm:flex-row gap-3">
                     {/* Search */}
-                    <div className="relative">
+                    <div className="relative flex-1 sm:flex-initial">
                       <input
                         type="text"
-                        placeholder="Search posts..."
+                        placeholder="Search..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm bg-white text-gray-900 placeholder-gray-400"
+                        className="w-full sm:w-48 md:w-56 pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm bg-white text-gray-900 placeholder-gray-400"
                       />
                       <svg className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -663,12 +615,12 @@ export default function DashboardPage() {
                     </select>
 
                     {/* Filter */}
-                    <div className="flex rounded-lg shadow-sm">
+                    <div className="flex rounded-lg shadow-sm flex-1 sm:flex-initial">
                       {(['all', 'published', 'draft'] as const).map((filterOption) => (
                         <button
                           key={filterOption}
                           onClick={() => setFilter(filterOption)}
-                          className={`px-4 py-2 text-sm font-medium ${
+                          className={`flex-1 sm:flex-initial px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium ${
                             filter === filterOption
                               ? 'bg-indigo-600 text-white'
                               : 'bg-white text-gray-700 hover:bg-gray-50'
@@ -690,7 +642,7 @@ export default function DashboardPage() {
 
               {/* Bulk Actions Bar */}
               {selectedPosts.size > 0 && (
-                <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 mb-6 flex items-center justify-between">
+                <div className="mx-3 sm:mx-4 lg:mx-6 bg-indigo-50 border border-indigo-200 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                   <div className="flex items-center space-x-4">
                     <span className="text-sm font-medium text-indigo-900">
                       {selectedPosts.size} {selectedPosts.size === 1 ? 'post' : 'posts'} selected
@@ -704,7 +656,7 @@ export default function DashboardPage() {
                   </div>
                   <button
                     onClick={() => setShowBulkDelete(true)}
-                    className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm font-medium flex items-center"
+                    className="w-full sm:w-auto bg-red-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-red-700 transition-colors text-xs sm:text-sm font-medium flex items-center justify-center"
                   >
                     <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -767,8 +719,119 @@ export default function DashboardPage() {
                   </div>
                 ) : (
                   getFilteredPosts().map((post) => (
-                    <div key={post._id} className="p-6 hover:bg-gray-50 transition-colors">
-                      <div className="flex items-start space-x-4">
+                    <div key={post._id} className="p-4 sm:p-5 lg:p-6 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0">
+                      {/* Mobile Layout */}
+                      <div className="block lg:hidden">
+                        <div className="flex items-start space-x-3">
+                          {/* Checkbox */}
+                          <div className="flex-shrink-0 pt-1">
+                            <input
+                              type="checkbox"
+                              checked={selectedPosts.has(post._id)}
+                              onChange={(e) => {
+                                const newSelected = new Set(selectedPosts);
+                                if (e.target.checked) {
+                                  newSelected.add(post._id);
+                                } else {
+                                  newSelected.delete(post._id);
+                                }
+                                setSelectedPosts(newSelected);
+                              }}
+                              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"
+                            />
+                          </div>
+                          
+                          {/* Mobile Content */}
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-sm font-semibold text-gray-900 mb-1 line-clamp-2">
+                              {post.title}
+                            </h3>
+                            
+                            {/* Meta info */}
+                            <div className="flex items-center flex-wrap gap-x-2 gap-y-1 text-xs text-gray-500 mb-2">
+                              <span>{formatDate(post.createdAt)}</span>
+                              <span>•</span>
+                              <span>{post.wordCount.toLocaleString()} words</span>
+                            </div>
+
+                            {/* Tags */}
+                            <div className="flex items-center gap-1 flex-wrap mb-3">
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                                post.status === 'published' 
+                                  ? 'bg-green-100 text-green-800' 
+                                  : 'bg-amber-100 text-amber-800'
+                              }`}>
+                                {post.status}
+                              </span>
+                              
+                              {post.seoOptimized && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-800">
+                                  SEO
+                                </span>
+                              )}
+                              
+                              {post.hasScreenshots && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-purple-100 text-purple-800">
+                                  {post.screenshotCount} imgs
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Mobile Actions */}
+                            <div className="flex items-center justify-between gap-2">
+                              <select
+                                value={post.folder || ''}
+                                onChange={(e) => updatePostFolder(post._id, e.target.value || null)}
+                                disabled={updatingPosts.has(post._id)}
+                                className="text-xs border border-gray-300 rounded px-2 py-1 bg-white text-gray-900 max-w-[140px] truncate"
+                              >
+                                <option value="">📁 Uncategorized</option>
+                                {folders.map((folder) => (
+                                  <option key={folder.id} value={folder.id}>
+                                    📁 {folder.name}
+                                  </option>
+                                ))}
+                              </select>
+
+                              <div className="flex items-center">
+                                <Link
+                                  href={`/posts/${post._id}`}
+                                  className="p-1.5 text-blue-500 hover:bg-blue-50 rounded"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                  </svg>
+                                </Link>
+                                <a
+                                  href={post.videoUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="p-1.5 text-red-500 hover:bg-red-50 rounded"
+                                >
+                                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zM9 16V8l8 4-8 4z"/>
+                                  </svg>
+                                </a>
+                                <button
+                                  onClick={() => {
+                                    setPostToDelete(post);
+                                    setShowDeleteModal(true);
+                                  }}
+                                  className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                  </svg>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Desktop Layout */}
+                      <div className="hidden lg:flex items-start space-x-4">
                         {/* Checkbox */}
                         <div className="flex-shrink-0 pt-1">
                           <input
@@ -815,7 +878,7 @@ export default function DashboardPage() {
                           )}
                         </div>
 
-                        {/* Content */}
+                        {/* Desktop Content */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between">
                             <div className="flex-1 min-w-0 pr-4">
@@ -856,7 +919,7 @@ export default function DashboardPage() {
                               </div>
                             </div>
 
-                            {/* Actions */}
+                            {/* Desktop Actions */}
                             <div className="flex items-center space-x-2">
                               {/* Folder Selector */}
                               <div className="flex items-center space-x-2">
