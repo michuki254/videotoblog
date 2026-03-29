@@ -21,6 +21,9 @@ export default function ConvertPage() {
   const [customTimestamps, setCustomTimestamps] = useState('30, 60, 90');
   const [includeFeaturedImage, setIncludeFeaturedImage] = useState(true);
   
+  // Transcription method state
+  const [transcriptionMethod, setTranscriptionMethod] = useState<'youtube' | 'deepgram'>('youtube');
+
   // Writing Style States
   const [tone, setTone] = useState('auto');
   const [pointOfView, setPointOfView] = useState('auto');
@@ -198,6 +201,7 @@ export default function ConvertPage() {
         includeFeaturedImage,
         includeScreenshots,
         screenshotCount: includeScreenshots === 'auto' ? screenshotCount : (includeScreenshots === 'custom' ? timestamps.length : 0),
+        transcriptionMethod, // Add transcription method
         // Writing Style Options
         writingStyle: {
           tone,
@@ -244,17 +248,17 @@ export default function ConvertPage() {
     icon?: React.ReactNode;
     description?: string;
   }) => (
-    <div className="border border-gray-200 rounded-xl bg-white overflow-hidden transition-all duration-300 hover:shadow-lg">
+    <div className="rounded-xl bg-white overflow-hidden transition-all duration-300 shadow-md hover:shadow-lg">
       <button
         type="button"
         onClick={onToggle}
-        className="w-full px-6 py-5 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
+        className="w-full px-6 py-5 text-left flex items-center justify-between hover:bg-[#FAFAFA] transition-colors"
       >
         <div className="flex items-center space-x-4">
-          {icon && <div className="text-indigo-600">{icon}</div>}
+          {icon && <div className="text-[#FF385C]">{icon}</div>}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-            {description && <p className="text-sm text-gray-500 mt-1">{description}</p>}
+            <h3 className="text-lg font-semibold text-[#484848]">{title}</h3>
+            {description && <p className="text-sm text-[#767676] mt-1">{description}</p>}
           </div>
         </div>
         <svg
@@ -299,10 +303,10 @@ export default function ConvertPage() {
           </div>
 
           {/* Main Form Card */}
-          <div className="bg-white shadow-sm rounded-lg sm:rounded-xl overflow-hidden">
-            
+          <div className="bg-white shadow-lg rounded-2xl overflow-hidden">
+
             {/* Compact Quick Actions Bar */}
-            <div className="bg-indigo-600 p-3 sm:p-4">
+            <div className="bg-[#FF385C] p-3 sm:p-4">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4">
                 <div className="flex items-center space-x-2">
                   <svg className="h-4 w-4 sm:h-5 sm:w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -435,6 +439,23 @@ export default function ConvertPage() {
 
                 <div className="bg-gray-50 rounded-xl p-6 hover:shadow-md transition-shadow">
                   <label className="block text-sm font-semibold text-gray-900 mb-3">
+                    Transcription Method
+                  </label>
+                  <select
+                    value={transcriptionMethod}
+                    onChange={(e) => setTranscriptionMethod(e.target.value as 'youtube' | 'deepgram')}
+                    className="w-full rounded-lg border-gray-300 bg-white text-gray-900"
+                  >
+                    <option value="youtube">YouTube Transcript (Free)</option>
+                    <option value="deepgram">DeepGram AI (Premium)</option>
+                  </select>
+                  <p className="mt-2 text-xs text-gray-500">
+                    {transcriptionMethod === 'youtube' ? 'Uses YouTube\'s built-in captions' : 'Higher accuracy AI transcription'}
+                  </p>
+                </div>
+
+                <div className="bg-gray-50 rounded-xl p-6 hover:shadow-md transition-shadow">
+                  <label className="block text-sm font-semibold text-gray-900 mb-3">
                     Quick Options
                   </label>
                   <div className="space-y-3">
@@ -443,18 +464,18 @@ export default function ConvertPage() {
                         id="seo"
                         type="checkbox"
                         defaultChecked
-                        className="h-4 w-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"
+                        className="h-4 w-4 text-[#FF385C] rounded border-gray-300 focus:ring-[#FF385C]"
                       />
-                      <span className="ml-2 text-sm text-gray-700">SEO Optimization</span>
+                      <span className="ml-2 text-sm text-[#484848]">SEO Optimization</span>
                     </label>
                     <label className="flex items-center cursor-pointer">
                       <input
                         id="headlines"
                         type="checkbox"
                         defaultChecked
-                        className="h-4 w-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500"
+                        className="h-4 w-4 text-[#FF385C] rounded border-gray-300 focus:ring-[#FF385C]"
                       />
-                      <span className="ml-2 text-sm text-gray-700">Smart Headlines</span>
+                      <span className="ml-2 text-sm text-[#484848]">Smart Headlines</span>
                     </label>
                   </div>
                 </div>
@@ -527,13 +548,13 @@ export default function ConvertPage() {
                     </div>
 
                     <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                      <label className="text-sm font-medium text-gray-700">
+                      <label className="text-sm font-medium text-[#484848]">
                         Include Emojis
                       </label>
                       <button
                         type="button"
                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                          useEmojis ? 'bg-indigo-600' : 'bg-gray-300'
+                          useEmojis ? 'bg-[#FF385C]' : 'bg-gray-300'
                         }`}
                         onClick={() => setUseEmojis(!useEmojis)}
                       >
@@ -558,13 +579,13 @@ export default function ConvertPage() {
                         { id: 'addCTA', label: 'Call-to-Action', state: addCTA, setState: setAddCTA }
                       ].map((option) => (
                         <div key={option.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <label className="text-sm font-medium text-gray-700">
+                          <label className="text-sm font-medium text-[#484848]">
                             {option.label}
                           </label>
                           <button
                             type="button"
                             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                              option.state ? 'bg-indigo-600' : 'bg-gray-300'
+                              option.state ? 'bg-[#FF385C]' : 'bg-gray-300'
                             }`}
                             onClick={() => option.setState(!option.state)}
                           >
@@ -607,15 +628,15 @@ export default function ConvertPage() {
                             key={mode.value}
                             type="button"
                             className={`relative p-4 rounded-xl border-2 transition-all ${
-                              includeScreenshots === mode.value 
-                                ? 'border-indigo-600 bg-indigo-50' 
+                              includeScreenshots === mode.value
+                                ? 'border-[#FF385C] bg-[#FF385C]/5'
                                 : 'border-gray-300 hover:border-gray-400'
                             }`}
                             onClick={() => setIncludeScreenshots(mode.value as 'none' | 'auto' | 'custom')}
                           >
                             <div className="text-2xl mb-2">{mode.icon}</div>
-                            <h4 className="text-sm font-medium text-gray-900">{mode.label}</h4>
-                            <p className="text-xs text-gray-500 mt-1">{mode.desc}</p>
+                            <h4 className="text-sm font-medium text-[#484848]">{mode.label}</h4>
+                            <p className="text-xs text-[#767676] mt-1">{mode.desc}</p>
                           </button>
                         ))}
                       </div>
@@ -623,7 +644,7 @@ export default function ConvertPage() {
 
                     {includeScreenshots === 'auto' && (
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-[#484848] mb-2">
                           Number of Screenshots
                         </label>
                         <input
@@ -632,11 +653,11 @@ export default function ConvertPage() {
                           max="10"
                           value={screenshotCount}
                           onChange={(e) => setScreenshotCount(parseInt(e.target.value))}
-                          className="w-full accent-indigo-600"
+                          className="w-full accent-[#FF385C]"
                         />
-                        <div className="flex justify-between text-xs text-gray-500 mt-1">
+                        <div className="flex justify-between text-xs text-[#767676] mt-1">
                           <span>1</span>
-                          <span className="font-medium text-indigo-600">{screenshotCount} screenshots</span>
+                          <span className="font-medium text-[#FF385C]">{screenshotCount} screenshots</span>
                           <span>10</span>
                         </div>
                       </div>
@@ -659,15 +680,15 @@ export default function ConvertPage() {
 
                     <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                       <div>
-                        <label className="text-sm font-medium text-gray-700">
+                        <label className="text-sm font-medium text-[#484848]">
                           Featured Image
                         </label>
-                        <p className="text-xs text-gray-500">Use video thumbnail as hero image</p>
+                        <p className="text-xs text-[#767676]">Use video thumbnail as hero image</p>
                       </div>
                       <button
                         type="button"
                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                          includeFeaturedImage ? 'bg-indigo-600' : 'bg-gray-300'
+                          includeFeaturedImage ? 'bg-[#FF385C]' : 'bg-gray-300'
                         }`}
                         onClick={() => setIncludeFeaturedImage(!includeFeaturedImage)}
                       >
@@ -682,19 +703,19 @@ export default function ConvertPage() {
                 </CollapsibleSection>
 
                 {/* Custom Instructions */}
-                <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-6">
-                  <label className="block text-sm font-semibold text-gray-900 mb-3">
+                <div className="bg-[#FAFAFA] rounded-xl p-6 shadow-sm">
+                  <label className="block text-sm font-semibold text-[#484848] mb-3">
                     Custom Instructions
                   </label>
                   <textarea
                     value={customInstructions}
                     onChange={(e) => setCustomInstructions(e.target.value)}
                     rows={4}
-                    className="w-full rounded-lg border-gray-300 bg-white text-gray-900 placeholder-gray-400"
+                    className="w-full rounded-lg border-gray-300 bg-white text-[#484848] placeholder-gray-400"
                     placeholder="Add any specific instructions for the AI... (e.g., focus on beginners, include code examples, avoid jargon)"
                   />
                   {customInstructions && (
-                    <p className="mt-2 text-xs text-gray-500">
+                    <p className="mt-2 text-xs text-[#767676]">
                       {customInstructions.length} characters
                     </p>
                   )}
@@ -707,7 +728,7 @@ export default function ConvertPage() {
                   type="submit"
                   disabled={isLoading || !url}
                   onClick={() => console.log('Button clicked, URL:', url, 'isLoading:', isLoading)}
-                  className={`w-full py-4 px-6 text-base font-semibold rounded-xl text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transform transition-all duration-200 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
+                  className={`w-full py-4 px-6 text-base font-semibold rounded-xl text-white bg-[#FF385C] hover:bg-[#E0314F] transform transition-all duration-200 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FF385C] shadow-lg ${
                     (isLoading || !url) && 'opacity-50 cursor-not-allowed hover:scale-100'
                   }`}
                 >
@@ -768,7 +789,7 @@ export default function ConvertPage() {
                 <div className="p-6 overflow-y-auto max-h-[60vh]">
                   <button
                     onClick={() => setShowSaveTemplate(true)}
-                    className="mb-6 w-full py-3 px-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                    className="mb-6 w-full py-3 px-4 bg-[#FF385C] text-white rounded-lg hover:bg-[#E0314F] transition-colors shadow-md"
                   >
                     Save Current Settings as Template
                   </button>
@@ -793,13 +814,13 @@ export default function ConvertPage() {
                                 loadTemplate(template.id);
                                 setShowTemplateManager(false);
                               }}
-                              className="px-3 py-1 text-sm bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 transition-colors"
+                              className="px-3 py-1 text-sm bg-[#00A699]/10 text-[#00A699] rounded hover:bg-[#00A699]/20 transition-colors font-medium"
                             >
                               Use
                             </button>
                             <button
                               onClick={() => deleteTemplate(template.id)}
-                              className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
+                              className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors font-medium"
                             >
                               Delete
                             </button>
@@ -832,14 +853,14 @@ export default function ConvertPage() {
                         setShowSaveTemplate(false);
                         setNewTemplateName('');
                       }}
-                      className="flex-1 py-2 px-4 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                      className="flex-1 py-2 px-4 border-2 border-gray-300 text-[#484848] rounded-lg hover:bg-gray-50 transition-colors font-medium"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={saveAsTemplate}
                       disabled={!newTemplateName.trim()}
-                      className="flex-1 py-2 px-4 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="flex-1 py-2 px-4 bg-[#FF385C] text-white rounded-lg hover:bg-[#E0314F] disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium shadow-md"
                     >
                       Save
                     </button>

@@ -106,9 +106,20 @@ export default function PreviewPage() {
       }
     }
 
+    // DON'T redirect if conversion is in progress - wait for it to complete
+    if (isConversionInProgress || isConverting) {
+      console.log('Conversion in progress, not redirecting...');
+      return;
+    }
+
     // If no stored data and no conversion data, redirect back to convert page
-    router.push('/convert');
-  }, [router]);
+    // Set loading to false before redirect to prevent flash
+    setLoading(false);
+    // Small delay to prevent flash before redirect
+    setTimeout(() => {
+      router.push('/convert');
+    }, 100);
+  }, [router, isConversionInProgress, isConverting]);
 
   const updateStepStatus = (stepId: string, status: ConversionStep['status'], progress?: number) => {
     setConversionSteps(steps => 
@@ -226,9 +237,9 @@ Consider exploring related topics and implementing the strategies discussed to m
         },
       });
 
-      // Add timeout for the API call
+      // Add timeout for the API call (increased to handle screenshot generation)
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Generation timeout - the video conversion is taking longer than expected. This can happen with longer videos or during high server load. Please try again.')), 240000) // 4 minute timeout
+        setTimeout(() => reject(new Error('Generation timeout - the video conversion is taking longer than expected. This can happen with longer videos or during high server load. Please try again.')), 600000) // 10 minute timeout for screenshot generation
       );
 
       const apiPromise = fetch('/api/convert', {
@@ -250,6 +261,7 @@ Consider exploring related topics and implementing the strategies discussed to m
           screenshotCount: conversionData.screenshotCount || 3, // Pass the desired screenshot count
           writingStyle: conversionData.writingStyle || {}, // Pass writing style options
           customInstructions: conversionData.customInstructions || '', // Pass custom instructions
+          transcriptionMethod: conversionData.transcriptionMethod || 'youtube', // Pass transcription method
         }),
       });
 
@@ -316,14 +328,37 @@ Consider exploring related topics and implementing the strategies discussed to m
       
       updateStepStatus('content-generation', 'completed');
 
-      // Step 3: Screenshots are now handled within the content generation
-      // But we still show this step for user experience
+      // Step 3: Screenshots - check if they were requested
       setCurrentStep(3);
-      updateStepStatus('screenshots', 'processing');
-      
-      // Small delay to show screenshot processing
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      updateStepStatus('screenshots', 'completed');
+
+      if (data.screenshotsRequested && data.postId) {
+        console.log('Screenshots were requested - generating in background...');
+        updateStepStatus('screenshots', 'processing');
+
+        // Generate screenshots in background (don't await - let it run async)
+        fetch(`/api/posts/${data.postId}/screenshots`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data.screenshotSettings || { mode: 'auto', count: 3 }),
+        })
+        .then(res => res.json())
+        .then(screenshotData => {
+          console.log('Screenshots generated:', screenshotData);
+          updateStepStatus('screenshots', 'completed');
+          // Optionally update blog data with screenshots here
+        })
+        .catch(err => {
+          console.error('Screenshot generation failed (non-blocking):', err);
+          updateStepStatus('screenshots', 'completed'); // Still mark as completed to not block UI
+        });
+
+        // Continue immediately without waiting for screenshots
+        await new Promise(resolve => setTimeout(resolve, 500));
+      } else {
+        console.log('Screenshots not requested - skipping for speed');
+        updateStepStatus('screenshots', 'completed');
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
 
       // Step 4: Final Optimization
       setCurrentStep(4);
@@ -357,6 +392,15 @@ Consider exploring related topics and implementing the strategies discussed to m
       setBlogData(finalBlogData);
       setIsConverting(false);
       setIsConversionInProgress(false); // Reset the flag on success
+
+      // Automatically redirect to the full blog post page with publish options, SEO score, etc.
+      if (data.postId) {
+        console.log('Redirecting to blog post page:', data.postId);
+        // Small delay to show completion animation
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        router.push(`/posts/${data.postId}`);
+        return;
+      }
 
     } catch (error) {
       console.error('Conversion error:', error);

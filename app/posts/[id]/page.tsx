@@ -11,6 +11,30 @@ import Navigation from '../../components/Navigation'
 import JSZip from 'jszip'
 import { usePageTracking } from '@/hooks/usePageTracking'
 
+// Helper function for safe clipboard operations
+const safeClipboardWrite = async (text: string): Promise<boolean> => {
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(text)
+      return true
+    } else {
+      // Fallback for browsers that don't support clipboard API
+      const textArea = document.createElement('textarea')
+      textArea.value = text
+      textArea.style.position = 'fixed'
+      textArea.style.left = '-999999px'
+      document.body.appendChild(textArea)
+      textArea.select()
+      const success = document.execCommand('copy')
+      document.body.removeChild(textArea)
+      return success
+    }
+  } catch (error) {
+    console.warn('Failed to copy to clipboard:', error)
+    return false
+  }
+}
+
 interface BlogPost {
   _id: string;
   title: string;
@@ -123,7 +147,7 @@ const ImageModal = ({ src, alt, isOpen, onClose }: { src: string; alt: string; i
             title="Download image"
           >
             {downloading ? (
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#FF385C]"></div>
             ) : (
               <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -230,7 +254,7 @@ const EnhancedImage = ({ src, alt, ...props }: { src?: string; alt?: string }) =
 
   if (!src || imageError) {
     return (
-      <div className="my-6 p-8 bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg text-center">
+      <div className="my-6 p-8 bg-gray-100 shadow-lg rounded-lg text-center">
         <svg className="w-12 h-12 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
@@ -248,7 +272,7 @@ const EnhancedImage = ({ src, alt, ...props }: { src?: string; alt?: string }) =
         <span className="block relative overflow-hidden rounded-xl shadow-lg bg-gray-100">
           {!imageLoaded && (
             <span className="absolute inset-0 flex items-center justify-center">
-              <span className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 block"></span>
+              <span className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#FF385C] block"></span>
             </span>
           )}
           <img
@@ -288,7 +312,7 @@ const EnhancedImage = ({ src, alt, ...props }: { src?: string; alt?: string }) =
                 title="Download image"
               >
                 {downloading ? (
-                  <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600 block"></span>
+                  <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#FF385C] block"></span>
                 ) : (
                   <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -666,11 +690,11 @@ export default function BlogPostPage() {
         const data = await response.json()
         setBlogScoring(data.analysis)
       } else {
-        console.error('Failed to fetch blog scoring')
+        console.warn('Failed to fetch blog scoring')
         setBlogScoring(null)
       }
     } catch (error) {
-      console.error('Failed to fetch blog scoring:', error)
+      console.warn('Failed to fetch blog scoring:', error)
       setBlogScoring(null)
     } finally {
       setScoringLoading(false)
@@ -702,16 +726,24 @@ export default function BlogPostPage() {
     }
   }
 
-  const copyToClipboard = () => {
+  const copyToClipboard = async () => {
     if (post?.content) {
-      navigator.clipboard.writeText(post.content)
-      alert('Blog content copied to clipboard!')
+      const success = await safeClipboardWrite(post.content)
+      if (success) {
+        alert('Blog content copied to clipboard!')
+      } else {
+        alert('Failed to copy to clipboard. Please copy manually.')
+      }
     }
   }
 
-  const copyMetadata = (text: string, type: string) => {
-    navigator.clipboard.writeText(text)
-    alert(`${type} copied to clipboard!`)
+  const copyMetadata = async (text: string, type: string) => {
+    const success = await safeClipboardWrite(text)
+    if (success) {
+      alert(`${type} copied to clipboard!`)
+    } else {
+      alert('Failed to copy to clipboard. Please copy manually.')
+    }
   }
 
   const downloadAsFile = () => {
@@ -1581,7 +1613,7 @@ Best regards,
   if (!isLoaded) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#FF385C]"></div>
       </div>
     )
   }
@@ -1596,7 +1628,7 @@ Best regards,
             <p className="text-gray-600 mb-4">Please sign in to view this blog post.</p>
             <Link 
               href="/sign-in"
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+              className="inline-flex items-center px-4 py-2 shadow-sm text-sm font-medium rounded-md shadow-sm text-white bg-[#FF385C] hover:bg-[#E0314F]"
             >
               Sign In
             </Link>
@@ -1666,8 +1698,8 @@ Best regards,
               
               <div className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
                 post?.status === 'published' 
-                  ? 'bg-green-500/20 text-green-100 border border-green-400/30' 
-                  : 'bg-yellow-500/20 text-yellow-100 border border-yellow-400/30'
+                  ? 'bg-green-500/20 text-green-100 shadow-sm' 
+                  : 'bg-yellow-500/20 text-yellow-100 shadow-sm'
               }`}>
                 {post?.status === 'published' ? (
                   <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 24 24">
@@ -1689,7 +1721,7 @@ Best regards,
           {loading ? (
             <div className="flex items-center justify-center min-h-[400px]">
               <div className="text-center">
-                <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
+                <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-[#FF385C] mx-auto mb-4"></div>
                 <p className="text-gray-600">Loading your blog post...</p>
               </div>
             </div>
@@ -1704,7 +1736,7 @@ Best regards,
               <p className="text-gray-600 mb-6 max-w-md mx-auto">{error}</p>
               <Link
                 href="/dashboard"
-                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="inline-flex items-center px-4 py-2 bg-[#FF385C] text-white rounded-lg hover:bg-[#E0314F] transition-colors"
               >
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -1717,7 +1749,7 @@ Best regards,
               {/* Main Content */}
               <div className="xl:col-span-5 order-2 xl:order-1">
                 {/* Compact Action Bar */}
-                <div className="bg-white rounded-lg shadow-sm p-3 sm:p-4 mb-4 sm:mb-6 border border-gray-100">
+                <div className="bg-white rounded-lg shadow-sm p-3 sm:p-4 mb-4 sm:mb-6 shadow-sm">
                   <div className="flex flex-col space-y-3">
 
                     {/* Publishing & Action Buttons */}
@@ -1750,7 +1782,7 @@ Best regards,
 
                       <button
                         onClick={copyToClipboard}
-                        className="flex flex-col items-center justify-center p-2 sm:p-3 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition-all duration-200 group"
+                        className="flex flex-col items-center justify-center p-2 sm:p-3 bg-[#FAFAFA] hover:bg-[#FF385C]/10 text-[#E0314F] rounded-lg transition-all duration-200 group"
                       >
                         <svg className="w-4 h-4 sm:w-5 sm:h-5 mb-0.5 sm:mb-1 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -1821,7 +1853,7 @@ Best regards,
                         </span>
                       )}
                       
-                      <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-700">
+                      <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-[#FF385C]/10 text-[#E0314F]">
                         {post.contentAnalysis.contentType}
                       </span>
                     </div>
@@ -1840,7 +1872,7 @@ Best regards,
                           className="object-cover"
                           priority
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+                        <div className="absolute inset-0 bg-black/30"></div>
                         
                         {/* Play Button Overlay */}
                         <a
@@ -1868,7 +1900,7 @@ Best regards,
 
                         {/* Content Type Badge */}
                         <div className="absolute top-4 right-4">
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-600 text-white shadow-lg">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-[#FF385C] text-white shadow-lg">
                             {post.contentAnalysis.contentType}
                           </span>
                         </div>
@@ -1881,7 +1913,7 @@ Best regards,
                             href={post.videoUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-800 ml-1 underline"
+                            className="text-[#FF385C] hover:text-blue-800 ml-1 underline"
                           >
                             Watch the original video
                           </a>
@@ -1893,18 +1925,18 @@ Best regards,
 
                 {/* Blog Content */}
                 <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 lg:p-12">
-                  <article className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-a:text-blue-600 prose-strong:text-gray-900 prose-ul:text-gray-700 prose-ol:text-gray-700 prose-blockquote:border-blue-500 prose-code:text-blue-600 prose-pre:bg-gray-100">
+                  <article className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-a:text-[#FF385C] prose-strong:text-gray-900 prose-ul:text-gray-700 prose-ol:text-gray-700 prose-blockquote:border-[#FF385C] prose-code:text-[#FF385C] prose-pre:bg-gray-100">
                     <ReactMarkdown
                       components={{
                         h1: ({ children }) => (
                           <h1 className="text-4xl font-bold mt-12 mb-6 text-gray-900 relative">
-                            <span className="absolute -left-8 lg:-left-12 top-1/2 transform -translate-y-1/2 w-4 lg:w-8 h-px bg-gradient-to-r from-blue-500 to-purple-500 hidden md:block"></span>
+                            <span className="absolute -left-8 lg:-left-12 top-1/2 transform -translate-y-1/2 w-4 lg:w-8 h-px bg-[#FAFAFA]0 hidden md:block"></span>
                             {children}
                           </h1>
                         ),
                         h2: ({ children }) => (
                           <h2 className="text-3xl font-bold mt-10 mb-4 text-gray-900 relative group">
-                            <span className="absolute -left-6 lg:-left-8 top-1/2 transform -translate-y-1/2 w-3 lg:w-4 h-px bg-gradient-to-r from-blue-400 to-purple-400 hidden md:block"></span>
+                            <span className="absolute -left-6 lg:-left-8 top-1/2 transform -translate-y-1/2 w-3 lg:w-4 h-px bg-blue-400 hidden md:block"></span>
                             {children}
                           </h2>
                         ),
@@ -1923,7 +1955,7 @@ Best regards,
                           return <p className="mb-6 text-gray-700 leading-loose text-lg">{children}</p>;
                         },
                         a: ({ href, children }) => (
-                          <a href={href} className="text-blue-600 hover:text-blue-800 underline decoration-2 underline-offset-2 transition-colors duration-200" target="_blank" rel="noopener noreferrer">
+                          <a href={href} className="text-[#FF385C] hover:text-blue-800 underline decoration-2 underline-offset-2 transition-colors duration-200" target="_blank" rel="noopener noreferrer">
                             {children}
                           </a>
                         ),
@@ -1943,18 +1975,18 @@ Best regards,
                         li: ({ children, ordered }) => (
                           <li className={`relative pl-8 ${ordered ? 'counter-increment-list' : ''}`}>
                             {ordered ? (
-                              <span className="absolute left-0 top-0 text-blue-600 font-semibold">
+                              <span className="absolute left-0 top-0 text-[#FF385C] font-semibold">
                                 <span className="counter-list"></span>.
                               </span>
                             ) : (
-                              <span className="absolute left-0 top-2 w-2 h-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></span>
+                              <span className="absolute left-0 top-2 w-2 h-2 bg-[#FAFAFA]0 rounded-full"></span>
                             )}
                             <span className="text-gray-700">{children}</span>
                           </li>
                         ),
                         blockquote: ({ children }) => (
-                          <blockquote className="relative border-l-4 border-gradient-to-b from-blue-500 to-purple-500 pl-6 py-3 my-8 bg-gradient-to-r from-blue-50 to-purple-50 rounded-r-lg">
-                            <svg className="absolute -left-2 -top-2 w-8 h-8 text-blue-500 opacity-20" fill="currentColor" viewBox="0 0 24 24">
+                          <blockquote className="relative border-l-4 border-[#FF385C] pl-6 py-3 my-8 bg-[#FAFAFA] rounded-r-lg shadow-sm">
+                            <svg className="absolute -left-2 -top-2 w-8 h-8 text-[#FF385C] opacity-20" fill="currentColor" viewBox="0 0 24 24">
                               <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
                             </svg>
                             <div className="relative italic text-gray-700">
@@ -1963,12 +1995,12 @@ Best regards,
                           </blockquote>
                         ),
                         code: ({ children }) => (
-                          <code className="bg-gradient-to-r from-gray-100 to-gray-200 px-2 py-1 rounded text-sm font-mono text-blue-600 border border-gray-300">
+                          <code className="bg-gray-100 px-2 py-1 rounded text-sm font-mono text-[#FF385C] shadow-sm">
                             {children}
                           </code>
                         ),
                         pre: ({ children }) => (
-                          <pre className="bg-gradient-to-br from-gray-900 to-gray-800 text-gray-100 p-6 rounded-xl overflow-x-auto text-sm shadow-inner my-6">
+                          <pre className="bg-gray-900 text-gray-100 p-6 rounded-xl overflow-x-auto text-sm shadow-inner my-6">
                             {children}
                           </pre>
                         )
@@ -1979,7 +2011,7 @@ Best regards,
                   </article>
                   
                   {/* Article Footer */}
-                  <div className="mt-12 pt-8 border-t border-gray-200">
+                  <div className="mt-12 pt-8 shadow-sm">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                       <div className="flex items-center space-x-4">
                         <span className="text-sm text-gray-500">Share this article:</span>
@@ -2009,17 +2041,19 @@ Best regards,
                             </svg>
                           </button>
                           <button
-                            onClick={() => {
-                              navigator.clipboard.writeText(window.location.href);
-                              // Show success notification
-                              const notification = document.createElement('div');
-                              notification.className = 'fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-opacity duration-300';
-                              notification.textContent = 'Link copied!';
-                              document.body.appendChild(notification);
-                              setTimeout(() => {
-                                notification.style.opacity = '0';
-                                setTimeout(() => document.body.removeChild(notification), 300);
-                              }, 2000);
+                            onClick={async () => {
+                              const success = await safeClipboardWrite(window.location.href);
+                              if (success) {
+                                // Show success notification
+                                const notification = document.createElement('div');
+                                notification.className = 'fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-opacity duration-300';
+                                notification.textContent = 'Link copied!';
+                                document.body.appendChild(notification);
+                                setTimeout(() => {
+                                  notification.style.opacity = '0';
+                                  setTimeout(() => document.body.removeChild(notification), 300);
+                                }, 2000);
+                              }
                             }}
                             className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                             title="Copy link"
@@ -2059,7 +2093,7 @@ Best regards,
                     
                     // Show progress notification
                     const progressNotification = document.createElement('div');
-                    progressNotification.className = 'fixed top-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-opacity duration-300';
+                    progressNotification.className = 'fixed top-4 right-4 bg-[#FF385C] text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-opacity duration-300';
                     progressNotification.innerHTML = `
                       <div class="flex items-center space-x-2">
                         <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
@@ -2187,7 +2221,7 @@ Best regards,
                       <div className="bg-white rounded-lg shadow-sm p-6 mt-8">
                         <div className="flex items-center justify-between mb-4">
                           <h3 className="text-xl font-bold text-gray-900 flex items-center">
-                            <svg className="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-6 h-6 mr-2 text-[#FF385C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
                             Image Gallery ({images.length} images)
@@ -2195,7 +2229,7 @@ Best regards,
                           
                           <button
                             onClick={downloadAllImages}
-                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+                            className="inline-flex items-center px-4 py-2 shadow-sm text-sm font-medium rounded-md shadow-sm text-white bg-[#FF385C] hover:bg-[#E0314F] transition-colors"
                             title="Download all images as ZIP"
                           >
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2276,7 +2310,7 @@ Best regards,
                 <div className="mt-8 flex justify-between items-center">
                   <Link
                     href="/dashboard"
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                    className="inline-flex items-center px-4 py-2 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors"
                   >
                     <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -2302,10 +2336,10 @@ Best regards,
                     )
                     
                     return (
-                      <div className="bg-gradient-to-br from-white via-blue-50 to-indigo-100 rounded-xl shadow-lg p-8">
+                      <div className="bg-white rounded-xl shadow-lg p-8 border border-blue-100">
                         <div className="flex items-center justify-between mb-6">
                           <h3 className="text-2xl font-bold text-gray-900 flex items-center">
-                            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center mr-3 shadow-lg">
+                            <div className="w-10 h-10 bg-[#FF385C] rounded-lg flex items-center justify-center mr-3 shadow-lg">
                               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                               </svg>
@@ -2320,11 +2354,11 @@ Best regards,
                             <span className="text-lg font-semibold text-gray-800">Overall Performance</span>
                             <div className="flex items-center space-x-3">
                               <div className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold text-white shadow-lg ${
-                                analysis.grade === 'A' ? 'bg-gradient-to-r from-green-400 to-green-600' :
-                                analysis.grade === 'B' ? 'bg-gradient-to-r from-blue-400 to-blue-600' :
-                                analysis.grade === 'C' ? 'bg-gradient-to-r from-yellow-400 to-yellow-600' :
-                                analysis.grade === 'D' ? 'bg-gradient-to-r from-orange-400 to-orange-600' :
-                                'bg-gradient-to-r from-red-400 to-red-600'
+                                analysis.grade === 'A' ? 'bg-green-500' :
+                                analysis.grade === 'B' ? 'bg-[#FAFAFA]0' :
+                                analysis.grade === 'C' ? 'bg-yellow-500' :
+                                analysis.grade === 'D' ? 'bg-orange-500' :
+                                'bg-red-500'
                               }`}>
                                 {analysis.grade}
                               </div>
@@ -2339,11 +2373,11 @@ Best regards,
                             <div className="w-full bg-gray-200 rounded-full h-4 shadow-inner">
                               <div 
                                 className={`h-4 rounded-full transition-all duration-1000 ease-out shadow-sm ${
-                                  analysis.totalScore >= 85 ? 'bg-gradient-to-r from-green-400 to-green-500' :
-                                  analysis.totalScore >= 75 ? 'bg-gradient-to-r from-blue-400 to-blue-500' :
-                                  analysis.totalScore >= 65 ? 'bg-gradient-to-r from-yellow-400 to-yellow-500' :
-                                  analysis.totalScore >= 50 ? 'bg-gradient-to-r from-orange-400 to-orange-500' :
-                                  'bg-gradient-to-r from-red-400 to-red-500'
+                                  analysis.totalScore >= 85 ? 'bg-green-500' :
+                                  analysis.totalScore >= 75 ? 'bg-[#FAFAFA]0' :
+                                  analysis.totalScore >= 65 ? 'bg-yellow-500' :
+                                  analysis.totalScore >= 50 ? 'bg-orange-500' :
+                                  'bg-red-500'
                                 }`}
                                 style={{ width: `${analysis.totalScore}%` }}
                               ></div>
@@ -2362,14 +2396,14 @@ Best regards,
                           <div className="bg-white rounded-lg p-5 shadow-md hover:shadow-lg transition-shadow duration-300">
                             <div className="flex items-center justify-between mb-3">
                               <div className="flex items-center">
-                                <div className="w-8 h-8 bg-gradient-to-r from-green-400 to-emerald-500 rounded-lg flex items-center justify-center mr-3">
+                                <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center mr-3">
                                   <span className="text-white text-sm font-bold">✓</span>
                                 </div>
                                 <span className="text-lg font-semibold text-gray-800">Readability</span>
                               </div>
                               <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                                 analysis.details.readability.status === 'Excellent' ? 'bg-green-100 text-green-700' :
-                                analysis.details.readability.status === 'Good' ? 'bg-blue-100 text-blue-700' :
+                                analysis.details.readability.status === 'Good' ? 'bg-[#FF385C]/10 text-[#E0314F]' :
                                 analysis.details.readability.status === 'Fair' ? 'bg-yellow-100 text-yellow-700' :
                                 'bg-red-100 text-red-700'
                               }`}>
@@ -2383,7 +2417,7 @@ Best regards,
                             <div className="relative">
                               <div className="w-full bg-gray-200 rounded-full h-3">
                                 <div 
-                                  className="h-3 rounded-full bg-gradient-to-r from-green-400 to-emerald-500 transition-all duration-700"
+                                  className="h-3 rounded-full bg-emerald-500 transition-all duration-700"
                                   style={{ width: `${(analysis.details.readability.score / 20) * 100}%` }}
                                 ></div>
                               </div>
@@ -2398,7 +2432,7 @@ Best regards,
                           <div className="bg-white rounded-lg p-5 shadow-md hover:shadow-lg transition-shadow duration-300">
                             <div className="flex items-center justify-between mb-3">
                               <div className="flex items-center">
-                                <div className="w-8 h-8 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-lg flex items-center justify-center mr-3">
+                                <div className="w-8 h-8 bg-[#FAFAFA]0 rounded-lg flex items-center justify-center mr-3">
                                   <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                   </svg>
@@ -2407,7 +2441,7 @@ Best regards,
                               </div>
                               <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                                 analysis.details.structure.status === 'Excellent' ? 'bg-green-100 text-green-700' :
-                                analysis.details.structure.status === 'Good' ? 'bg-blue-100 text-blue-700' :
+                                analysis.details.structure.status === 'Good' ? 'bg-[#FF385C]/10 text-[#E0314F]' :
                                 analysis.details.structure.status === 'Fair' ? 'bg-yellow-100 text-yellow-700' :
                                 'bg-red-100 text-red-700'
                               }`}>
@@ -2441,7 +2475,7 @@ Best regards,
                             <div className="relative">
                               <div className="w-full bg-gray-200 rounded-full h-3">
                                 <div 
-                                  className="h-3 rounded-full bg-gradient-to-r from-blue-400 to-indigo-500 transition-all duration-700"
+                                  className="h-3 rounded-full bg-[#FAFAFA]0 transition-all duration-700"
                                   style={{ width: `${(analysis.details.structure.score / 50) * 100}%` }}
                                 ></div>
                               </div>
@@ -2456,7 +2490,7 @@ Best regards,
                           <div className="bg-white rounded-lg p-5 shadow-md hover:shadow-lg transition-shadow duration-300">
                             <div className="flex items-center justify-between mb-3">
                               <div className="flex items-center">
-                                <div className="w-8 h-8 bg-gradient-to-r from-purple-400 to-pink-500 rounded-lg flex items-center justify-center mr-3">
+                                <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center mr-3">
                                   <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
                                   </svg>
@@ -2465,7 +2499,7 @@ Best regards,
                               </div>
                               <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                                 analysis.details.keyphrase.status === 'Excellent' ? 'bg-green-100 text-green-700' :
-                                analysis.details.keyphrase.status === 'Good' ? 'bg-blue-100 text-blue-700' :
+                                analysis.details.keyphrase.status === 'Good' ? 'bg-[#FF385C]/10 text-[#E0314F]' :
                                 analysis.details.keyphrase.status === 'Fair' ? 'bg-yellow-100 text-yellow-700' :
                                 'bg-red-100 text-red-700'
                               }`}>
@@ -2503,7 +2537,7 @@ Best regards,
                             <div className="relative">
                               <div className="w-full bg-gray-200 rounded-full h-3">
                                 <div 
-                                  className="h-3 rounded-full bg-gradient-to-r from-purple-400 to-pink-500 transition-all duration-700"
+                                  className="h-3 rounded-full bg-purple-500 transition-all duration-700"
                                   style={{ width: `${(analysis.details.keyphrase.score / 30) * 100}%` }}
                                 ></div>
                               </div>
@@ -2517,9 +2551,9 @@ Best regards,
 
                         {/* Improvement Tips */}
                         {analysis.totalScore < 85 && (
-                          <div className="mt-6 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-5">
+                          <div className="mt-6 bg-amber-50 rounded-lg p-5 shadow-sm">
                             <div className="flex items-center mb-3">
-                              <div className="w-8 h-8 bg-gradient-to-r from-amber-400 to-orange-500 rounded-lg flex items-center justify-center mr-3">
+                              <div className="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center mr-3">
                                 <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                                 </svg>
@@ -2577,9 +2611,9 @@ Best regards,
                   })()}
 
                   {/* Metadata Section */}
-                  <div className="bg-gradient-to-br from-white to-blue-50 rounded-2xl shadow-lg p-6 border border-blue-100">
+                  <div className="bg-white rounded-2xl shadow-lg p-6 border border-blue-100">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                      <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mr-3 shadow">
+                      <div className="w-8 h-8 bg-[#FF385C] rounded-lg flex items-center justify-center mr-3 shadow">
                         <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                         </svg>
@@ -2746,9 +2780,9 @@ Best regards,
                   </div>
 
                   {/* Tags Section */}
-                  <div className="bg-gradient-to-br from-white to-purple-50 rounded-2xl shadow-lg p-6 border border-purple-100">
+                  <div className="bg-white rounded-2xl shadow-lg p-6 shadow-sm">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                      <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mr-3 shadow">
+                      <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center mr-3 shadow">
                         <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                         </svg>
@@ -2778,9 +2812,9 @@ Best regards,
                   </div>
 
                   {/* Social Media Sharing Section */}
-                  <div className="bg-gradient-to-br from-white to-indigo-50 rounded-2xl shadow-lg p-6 border border-indigo-100">
+                  <div className="bg-white rounded-2xl shadow-lg p-6 shadow-sm">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                      <div className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center mr-3 shadow">
+                      <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center mr-3 shadow">
                         <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
                         </svg>
@@ -2792,20 +2826,20 @@ Best regards,
                       {/* Facebook */}
                       <button
                         onClick={initializeFacebookContent}
-                        className="w-full flex items-center justify-between p-3 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-all duration-200 group"
+                        className="w-full flex items-center justify-between p-3 bg-[#FAFAFA] hover:bg-[#FF385C]/10 shadow-sm rounded-lg transition-all duration-200 group"
                       >
                         <div className="flex items-center">
-                          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center mr-3">
+                          <div className="w-8 h-8 bg-[#FF385C] rounded-lg flex items-center justify-center mr-3">
                             <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
                               <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
                             </svg>
                           </div>
                           <div className="text-left">
                             <div className="font-medium text-blue-800">Facebook Post</div>
-                            <div className="text-sm text-blue-600">Generate optimized content</div>
+                            <div className="text-sm text-[#FF385C]">Generate optimized content</div>
                           </div>
                         </div>
-                        <svg className="w-5 h-5 text-blue-600 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5 text-[#FF385C] group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                         </svg>
                       </button>
@@ -2813,7 +2847,7 @@ Best regards,
                       {/* X (Twitter) */}
                       <button
                         onClick={initializeTwitterContent}
-                        className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg transition-all duration-200 group"
+                        className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 shadow-sm rounded-lg transition-all duration-200 group"
                       >
                         <div className="flex items-center">
                           <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center mr-3">
@@ -2834,20 +2868,20 @@ Best regards,
                       {/* LinkedIn */}
                       <button
                         onClick={initializeLinkedInContent}
-                        className="w-full flex items-center justify-between p-3 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-all duration-200 group"
+                        className="w-full flex items-center justify-between p-3 bg-[#FAFAFA] hover:bg-[#FF385C]/10 shadow-sm rounded-lg transition-all duration-200 group"
                       >
                         <div className="flex items-center">
-                          <div className="w-8 h-8 bg-blue-700 rounded-lg flex items-center justify-center mr-3">
+                          <div className="w-8 h-8 bg-[#E0314F] rounded-lg flex items-center justify-center mr-3">
                             <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
                               <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
                             </svg>
                           </div>
                           <div className="text-left">
                             <div className="font-medium text-blue-800">LinkedIn Post</div>
-                            <div className="text-sm text-blue-600">Share professionally</div>
+                            <div className="text-sm text-[#FF385C]">Share professionally</div>
                           </div>
                         </div>
-                        <svg className="w-5 h-5 text-blue-600 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5 text-[#FF385C] group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                         </svg>
                       </button>
@@ -2855,10 +2889,10 @@ Best regards,
                       {/* Instagram */}
                       <button
                         onClick={initializeInstagramContent}
-                        className="w-full flex items-center justify-between p-3 bg-pink-50 hover:bg-pink-100 border border-pink-200 rounded-lg transition-all duration-200 group"
+                        className="w-full flex items-center justify-between p-3 bg-pink-50 hover:bg-pink-100 shadow-sm rounded-lg transition-all duration-200 group"
                       >
                         <div className="flex items-center">
-                          <div className="w-8 h-8 bg-gradient-to-br from-purple-600 via-pink-600 to-orange-500 rounded-lg flex items-center justify-center mr-3">
+                          <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center mr-3">
                             <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
                               <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
                             </svg>
@@ -2876,7 +2910,7 @@ Best regards,
                       {/* Email Promotion */}
                       <button
                         onClick={initializeEmailContent}
-                        className="w-full flex items-center justify-between p-3 bg-green-50 hover:bg-green-100 border border-green-200 rounded-lg transition-all duration-200 group"
+                        className="w-full flex items-center justify-between p-3 bg-green-50 hover:bg-green-100 shadow-sm rounded-lg transition-all duration-200 group"
                       >
                         <div className="flex items-center">
                           <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center mr-3">
@@ -2896,8 +2930,9 @@ Best regards,
 
                       {/* Copy Link */}
                       <button
-                        onClick={() => {
-                          navigator.clipboard.writeText(window.location.href).then(() => {
+                        onClick={async () => {
+                          const success = await safeClipboardWrite(window.location.href);
+                          if (success) {
                             // Show success notification
                             const notification = document.createElement('div');
                             notification.className = 'fixed top-4 right-4 bg-gray-600 text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-opacity duration-300';
@@ -2910,14 +2945,14 @@ Best regards,
                               </div>
                             `;
                             document.body.appendChild(notification);
-                            
+
                             setTimeout(() => {
                               notification.style.opacity = '0';
                               setTimeout(() => document.body.removeChild(notification), 300);
                             }, 2000);
-                          });
+                          }
                         }}
-                        className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg transition-all duration-200 group"
+                        className="w-full flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 shadow-sm rounded-lg transition-all duration-200 group"
                       >
                         <div className="flex items-center">
                           <div className="w-8 h-8 bg-gray-600 rounded-lg flex items-center justify-center mr-3">
@@ -2936,14 +2971,14 @@ Best regards,
                       </button>
                     </div>
 
-                    <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="mt-4 p-3 bg-[#FAFAFA] rounded-lg shadow-sm">
                       <div className="flex items-start">
-                        <svg className="w-4 h-4 text-blue-600 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4 text-[#FF385C] mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         <div className="text-sm text-blue-800">
                           <div className="font-medium mb-1">Sharing Tips:</div>
-                          <ul className="text-blue-700 space-y-1">
+                          <ul className="text-[#E0314F] space-y-1">
                             <li>• For Instagram: Use the copied text with your image post</li>
                             <li>• Add relevant hashtags to increase reach</li>
                             <li>• Tag relevant accounts to expand your audience</li>
@@ -2954,9 +2989,9 @@ Best regards,
                   </div>
 
                   {/* Quick Stats Section */}
-                  <div className="bg-gradient-to-br from-white to-green-50 rounded-2xl shadow-lg p-6 border border-green-100">
+                  <div className="bg-white rounded-2xl shadow-lg p-6 shadow-sm">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                      <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-green-600 rounded-lg flex items-center justify-center mr-3 shadow">
+                      <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center mr-3 shadow">
                         <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                         </svg>
@@ -2965,7 +3000,7 @@ Best regards,
                     </h3>
 
                     <div className="grid grid-cols-2 gap-3">
-                      <div className="bg-white rounded-lg p-3 border border-gray-200">
+                      <div className="bg-white rounded-lg p-3 shadow-sm">
                         <div className="flex items-center justify-between mb-1">
                           <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -2975,7 +3010,7 @@ Best regards,
                         <span className="text-xs text-gray-600">Min Read</span>
                       </div>
                       
-                      <div className="bg-white rounded-lg p-3 border border-gray-200">
+                      <div className="bg-white rounded-lg p-3 shadow-sm">
                         <div className="flex items-center justify-between mb-1">
                           <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -2985,7 +3020,7 @@ Best regards,
                         <span className="text-xs text-gray-600">Words</span>
                       </div>
                       
-                      <div className="bg-white rounded-lg p-3 border border-gray-200">
+                      <div className="bg-white rounded-lg p-3 shadow-sm">
                         <div className="flex items-center justify-between mb-1">
                           <svg className="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -3000,7 +3035,7 @@ Best regards,
                         <span className="text-xs text-gray-600">Images</span>
                       </div>
                       
-                      <div className="bg-white rounded-lg p-3 border border-gray-200">
+                      <div className="bg-white rounded-lg p-3 shadow-sm">
                         <div className="flex items-center justify-between mb-1">
                           <svg className="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -3011,7 +3046,7 @@ Best regards,
                       </div>
                     </div>
                     
-                    <div className="mt-4 pt-4 border-t border-gray-200">
+                    <div className="mt-4 pt-4 shadow-sm">
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-gray-600">Content Type</span>
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
@@ -3037,10 +3072,10 @@ Best regards,
       {showWordPressModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="px-6 py-4 border-b border-gray-200">
+            <div className="px-6 py-4 shadow-sm">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-                  <svg className="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-6 h-6 mr-2 text-[#FF385C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                   </svg>
                   Publish to WordPress
@@ -3061,7 +3096,7 @@ Best regards,
               {wordpressConfig.url && wordpressConfig.username && wordpressConfig.password ? (
                 // WordPress is configured - show quick publish interface
                 <div className="space-y-6">
-                  <div className="bg-green-50 rounded-lg p-6 border border-green-200">
+                  <div className="bg-green-50 rounded-lg p-6 shadow-sm">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center">
                         <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-4">
@@ -3087,28 +3122,28 @@ Best regards,
                     </div>
                     
                     {/* What will be published info */}
-                    <div className="bg-blue-50 rounded-lg p-4 mb-4 border border-blue-200">
+                    <div className="bg-[#FAFAFA] rounded-lg p-4 mb-4 shadow-sm">
                       <h4 className="text-sm font-semibold text-blue-900 mb-2 flex items-center">
-                        <svg className="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4 mr-2 text-[#FF385C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         What will be published:
                       </h4>
                       <ul className="text-sm text-blue-800 space-y-1">
                         <li className="flex items-center">
-                          <svg className="w-3 h-3 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-3 h-3 mr-2 text-[#FF385C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
                           Blog post content and formatting
                         </li>
                         <li className="flex items-center">
-                          <svg className="w-3 h-3 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-3 h-3 mr-2 text-[#FF385C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
                           All images uploaded to WordPress media library
                         </li>
                         <li className="flex items-center">
-                          <svg className="w-3 h-3 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-3 h-3 mr-2 text-[#FF385C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
                           SEO metadata and tags
@@ -3137,7 +3172,7 @@ Best regards,
                       className={`w-full flex items-center justify-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
                         connectionStatus === 'success'
                           ? 'bg-green-600 text-white hover:bg-green-700'
-                          : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 shadow-sm'
+                          : 'bg-white text-gray-700 shadow-sm hover:bg-gray-50 shadow-sm'
                       }`}
                     >
                       {testingConnection ? (
@@ -3164,7 +3199,7 @@ Best regards,
 
                     {/* Connection Status Messages */}
                     {connectionStatus === 'success' && (
-                      <div className="mt-4 flex items-start p-3 text-sm text-green-800 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="mt-4 flex items-start p-3 text-sm text-green-800 bg-green-50 shadow-sm rounded-lg">
                         <svg className="w-5 h-5 mr-2 mt-0.5 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
@@ -3176,7 +3211,7 @@ Best regards,
                     )}
 
                     {connectionStatus === 'error' && connectionError && (
-                      <div className="mt-4 flex items-start p-3 text-sm text-red-800 bg-red-50 border border-red-200 rounded-lg">
+                      <div className="mt-4 flex items-start p-3 text-sm text-red-800 bg-red-50 shadow-sm rounded-lg">
                         <svg className="w-5 h-5 mr-2 mt-0.5 text-red-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
@@ -3213,7 +3248,7 @@ Best regards,
                         <select
                           value={metaData.status}
                           onChange={(e) => setMetaData(prev => ({ ...prev, status: e.target.value as 'draft' | 'publish' }))}
-                          className="block w-full px-4 py-3 text-base text-gray-900 font-medium border-2 border-gray-300 rounded-lg shadow-sm bg-white focus:border-green-500 focus:ring-4 focus:ring-green-100 focus:outline-none transition-all duration-200"
+                          className="block w-full px-4 py-3 text-base text-gray-900 font-medium shadow-sm rounded-lg shadow-sm bg-white focus:border-green-500 focus:ring-4 focus:ring-green-100 focus:outline-none transition-all duration-200"
                         >
                           <option value="draft">Draft (Preview Only)</option>
                           <option value="publish">Publish Immediately</option>
@@ -3234,7 +3269,7 @@ Best regards,
                           value={metaData.metaTitle}
                           onChange={(e) => setMetaData(prev => ({ ...prev, metaTitle: e.target.value }))}
                           placeholder={post?.title || "Leave empty to use post title"}
-                          className="block w-full px-4 py-3 text-base text-gray-900 font-medium border-2 border-gray-300 rounded-lg shadow-sm bg-white focus:border-green-500 focus:ring-4 focus:ring-green-100 focus:outline-none transition-all duration-200 placeholder-gray-500"
+                          className="block w-full px-4 py-3 text-base text-gray-900 font-medium shadow-sm rounded-lg shadow-sm bg-white focus:border-green-500 focus:ring-4 focus:ring-green-100 focus:outline-none transition-all duration-200 placeholder-gray-500"
                         />
                         <p className="mt-2 text-sm text-gray-600">Custom title for SEO (will use post title if empty)</p>
                       </div>
@@ -3252,7 +3287,7 @@ Best regards,
                           onChange={(e) => setMetaData(prev => ({ ...prev, metaDescription: e.target.value }))}
                           placeholder="Leave empty to auto-generate from content"
                           rows={4}
-                          className="block w-full px-4 py-3 text-base text-gray-900 font-medium border-2 border-gray-300 rounded-lg shadow-sm bg-white focus:border-green-500 focus:ring-4 focus:ring-green-100 focus:outline-none transition-all duration-200 placeholder-gray-500 resize-none"
+                          className="block w-full px-4 py-3 text-base text-gray-900 font-medium shadow-sm rounded-lg shadow-sm bg-white focus:border-green-500 focus:ring-4 focus:ring-green-100 focus:outline-none transition-all duration-200 placeholder-gray-500 resize-none"
                         />
                         <p className="mt-2 text-sm text-gray-600">Brief description for search engines (will auto-generate if empty)</p>
                       </div>
@@ -3262,8 +3297,8 @@ Best regards,
               ) : (
                 // WordPress is not configured - show setup prompt
                 <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-16 h-16 bg-[#FF385C]/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <svg className="w-8 h-8 text-[#FF385C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
@@ -3276,7 +3311,7 @@ Best regards,
                   <div className="space-y-4">
                     <Link
                       href="/settings"
-                      className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+                      className="inline-flex items-center px-6 py-3 shadow-sm text-base font-medium rounded-lg shadow-sm text-white bg-[#FF385C] hover:bg-[#E0314F] transition-colors"
                     >
                       <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -3290,7 +3325,7 @@ Best regards,
                     </p>
                   </div>
 
-                  <div className="mt-8 bg-blue-50 rounded-lg p-4">
+                  <div className="mt-8 bg-[#FAFAFA] rounded-lg p-4">
                     <h4 className="text-sm font-medium text-blue-900 mb-2">What you'll need:</h4>
                     <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
                       <li>Your WordPress site URL</li>
@@ -3302,17 +3337,17 @@ Best regards,
               )}
             </div>
 
-            <div className="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+            <div className="px-6 py-4 shadow-sm flex justify-end space-x-3">
               <button
                 onClick={() => setShowWordPressModal(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white shadow-sm rounded-md hover:bg-gray-50 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={publishToWordPress}
                 disabled={!wordpressConfig.url || !wordpressConfig.username || !wordpressConfig.password || wordpressLoading}
-                className="px-6 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
+                className="px-6 py-2 text-sm font-medium text-white bg-[#FF385C] shadow-sm rounded-md hover:bg-[#E0314F] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FF385C]/500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
               >
                 {wordpressLoading ? (
                   <>
@@ -3337,7 +3372,7 @@ Best regards,
       {showMediumModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-md transform transition-all duration-200 scale-100">
-            <div className="p-6 border-b border-gray-200">
+            <div className="p-6 shadow-sm">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
@@ -3372,7 +3407,7 @@ Best regards,
                   value={mediumConfig.accessToken}
                   onChange={(e) => setMediumConfig({...mediumConfig, accessToken: e.target.value})}
                   placeholder="Enter your Medium access token"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full px-3 py-2 shadow-sm rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   Get your token from <a href="https://medium.com/me/settings" target="_blank" rel="noopener noreferrer" className="text-green-600 hover:underline">Medium Settings</a>
@@ -3388,7 +3423,7 @@ Best regards,
                     id="medium-publication"
                     value={mediumConfig.publicationId}
                     onChange={(e) => setMediumConfig({...mediumConfig, publicationId: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className="w-full px-3 py-2 shadow-sm rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   >
                     <option value="">Personal Account</option>
                     {mediumPublications.map(pub => (
@@ -3399,7 +3434,7 @@ Best regards,
               )}
 
               {mediumConnectionStatus === 'success' && (
-                <div className="p-3 bg-green-50 border border-green-200 rounded-md">
+                <div className="p-3 bg-green-50 shadow-sm rounded-md">
                   <div className="flex items-center">
                     <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -3410,7 +3445,7 @@ Best regards,
               )}
 
               {mediumConnectionStatus === 'error' && mediumConnectionError && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                <div className="p-3 bg-red-50 shadow-sm rounded-md">
                   <div className="flex items-start">
                     <svg className="w-5 h-5 text-red-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -3421,7 +3456,7 @@ Best regards,
               )}
             </div>
             
-            <div className="p-6 border-t border-gray-200 flex justify-between">
+            <div className="p-6 shadow-sm flex justify-between">
               <button
                 onClick={testMediumConnection}
                 disabled={testingMediumConnection || !mediumConfig.accessToken}
@@ -3463,10 +3498,10 @@ Best regards,
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-gray-200 bg-blue-50">
+            <div className="px-6 py-4 shadow-sm bg-[#FAFAFA]">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-                  <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center mr-3">
+                  <div className="w-8 h-8 bg-[#FF385C] rounded-lg flex items-center justify-center mr-3">
                     <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
                     </svg>
@@ -3486,14 +3521,14 @@ Best regards,
 
             {/* Modal Content */}
             <div className="p-6 space-y-6">
-              <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+              <div className="bg-[#FAFAFA] rounded-lg p-4 shadow-sm">
                 <div className="flex items-start">
-                  <svg className="w-5 h-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-[#FF385C] mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <div className="text-sm text-blue-800">
                     <div className="font-medium mb-1">Auto-Generated Content</div>
-                    <p className="text-blue-700">We've pre-filled the fields with optimized content from your blog post. Feel free to customize and edit as needed.</p>
+                    <p className="text-[#E0314F]">We've pre-filled the fields with optimized content from your blog post. Feel free to customize and edit as needed.</p>
                   </div>
                 </div>
               </div>
@@ -3510,7 +3545,7 @@ Best regards,
                       type="text"
                       value={facebookContent.title}
                       onChange={(e) => setFacebookContent(prev => ({ ...prev, title: e.target.value }))}
-                      className="block w-full px-4 py-3 text-base border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-100 focus:outline-none transition-all duration-200"
+                      className="block w-full px-4 py-3 text-base shadow-sm rounded-lg shadow-sm focus:border-[#FF385C] focus:ring-4 focus:ring-[#FF385C]/100 focus:outline-none transition-all duration-200"
                       placeholder="Enter your Facebook post title..."
                     />
                     <div className="flex justify-between text-xs mt-1">
@@ -3530,7 +3565,7 @@ Best regards,
                       value={facebookContent.description}
                       onChange={(e) => setFacebookContent(prev => ({ ...prev, description: e.target.value }))}
                       rows={4}
-                      className="block w-full px-4 py-3 text-base border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-100 focus:outline-none transition-all duration-200 resize-none"
+                      className="block w-full px-4 py-3 text-base shadow-sm rounded-lg shadow-sm focus:border-[#FF385C] focus:ring-4 focus:ring-[#FF385C]/100 focus:outline-none transition-all duration-200 resize-none"
                       placeholder="Enter your Facebook post description..."
                     />
                     <div className="flex justify-between text-xs mt-1">
@@ -3550,7 +3585,7 @@ Best regards,
                       type="text"
                       value={facebookContent.articleSection}
                       onChange={(e) => setFacebookContent(prev => ({ ...prev, articleSection: e.target.value }))}
-                      className="block w-full px-4 py-3 text-base border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-100 focus:outline-none transition-all duration-200"
+                      className="block w-full px-4 py-3 text-base shadow-sm rounded-lg shadow-sm focus:border-[#FF385C] focus:ring-4 focus:ring-[#FF385C]/100 focus:outline-none transition-all duration-200"
                       placeholder="e.g., Technology | Business"
                     />
                     <p className="text-xs text-gray-500 mt-1">Categorizes your content for better organization</p>
@@ -3568,7 +3603,7 @@ Best regards,
                       type="url"
                       value={facebookContent.imageSource}
                       onChange={(e) => setFacebookContent(prev => ({ ...prev, imageSource: e.target.value }))}
-                      className="block w-full px-4 py-3 text-base border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-100 focus:outline-none transition-all duration-200"
+                      className="block w-full px-4 py-3 text-base shadow-sm rounded-lg shadow-sm focus:border-[#FF385C] focus:ring-4 focus:ring-[#FF385C]/100 focus:outline-none transition-all duration-200"
                       placeholder="https://example.com/image.jpg"
                     />
                     <p className="text-xs text-gray-500 mt-1">URL of the image to display with your post</p>
@@ -3577,7 +3612,7 @@ Best regards,
                     {facebookContent.imageSource && (
                       <div className="mt-3">
                         <div className="text-xs font-medium text-gray-700 mb-2">Preview:</div>
-                        <div className="border-2 border-gray-200 rounded-lg overflow-hidden">
+                        <div className="shadow-md rounded-lg overflow-hidden">
                           <img
                             src={facebookContent.imageSource}
                             alt="Facebook post preview"
@@ -3608,16 +3643,16 @@ Best regards,
                       value={facebookContent.tags}
                       onChange={(e) => setFacebookContent(prev => ({ ...prev, tags: e.target.value }))}
                       rows={3}
-                      className="block w-full px-4 py-3 text-base border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-100 focus:outline-none transition-all duration-200 resize-none"
+                      className="block w-full px-4 py-3 text-base shadow-sm rounded-lg shadow-sm focus:border-[#FF385C] focus:ring-4 focus:ring-[#FF385C]/100 focus:outline-none transition-all duration-200 resize-none"
                       placeholder="#technology #business #innovation #tips"
                     />
                     <p className="text-xs text-gray-500 mt-1">Hashtags to increase post visibility and reach</p>
                   </div>
 
                   {/* Post Preview */}
-                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                  <div className="bg-gray-50 rounded-lg p-4 shadow-sm">
                     <div className="text-sm font-medium text-gray-700 mb-3 flex items-center">
-                      <svg className="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4 mr-2 text-[#FF385C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 616 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                       </svg>
@@ -3631,10 +3666,10 @@ Best regards,
                         <div className="text-gray-700">{facebookContent.description}</div>
                       )}
                       {facebookContent.articleSection && (
-                        <div className="text-blue-600 text-xs">📂 {facebookContent.articleSection}</div>
+                        <div className="text-[#FF385C] text-xs">📂 {facebookContent.articleSection}</div>
                       )}
                       {facebookContent.tags && (
-                        <div className="text-blue-600 text-xs">{facebookContent.tags}</div>
+                        <div className="text-[#FF385C] text-xs">{facebookContent.tags}</div>
                       )}
                     </div>
                   </div>
@@ -3643,19 +3678,20 @@ Best regards,
             </div>
 
             {/* Modal Footer */}
-            <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-between items-center">
+            <div className="px-6 py-4 shadow-sm bg-gray-50 flex justify-between items-center">
               <button
                 onClick={() => setShowFacebookModal(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white shadow-sm rounded-lg hover:bg-gray-50 transition-colors"
               >
                 Cancel
               </button>
               
               <div className="flex space-x-3">
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     const fullContent = `${facebookContent.title}\n\n${facebookContent.description}\n\n${facebookContent.articleSection}\n\n${facebookContent.tags}\n\nRead more: ${window.location.href}`;
-                    navigator.clipboard.writeText(fullContent).then(() => {
+                    const success = await safeClipboardWrite(fullContent);
+                    if (success) {
                       // Show success notification
                       const notification = document.createElement('div');
                       notification.className = 'fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-opacity duration-300';
@@ -3668,14 +3704,14 @@ Best regards,
                         </div>
                       `;
                       document.body.appendChild(notification);
-                      
+
                       setTimeout(() => {
                         notification.style.opacity = '0';
                         setTimeout(() => document.body.removeChild(notification), 300);
                       }, 3000);
-                    });
+                    }
                   }}
-                  className="px-4 py-2 text-sm font-medium text-blue-700 bg-blue-100 border border-blue-300 rounded-lg hover:bg-blue-200 transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-[#E0314F] bg-[#FF385C]/10 shadow-sm rounded-lg hover:bg-[#FF385C]/30 transition-colors"
                 >
                   📋 Copy Content
                 </button>
@@ -3687,7 +3723,7 @@ Best regards,
                     window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${quote}`, '_blank', 'width=600,height=400');
                     setShowFacebookModal(false);
                   }}
-                  className="px-6 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+                  className="px-6 py-2 text-sm font-medium text-white bg-[#FF385C] shadow-sm rounded-lg hover:bg-[#E0314F] transition-colors flex items-center"
                 >
                   <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
@@ -3705,7 +3741,7 @@ Best regards,
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500">
+            <div className="px-6 py-4 shadow-sm bg-purple-600">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
@@ -3743,7 +3779,7 @@ Best regards,
                       value={instagramContent.caption}
                       onChange={(e) => setInstagramContent(prev => ({ ...prev, caption: e.target.value }))}
                       rows={6}
-                      className="block w-full px-4 py-3 text-base border-2 border-gray-300 rounded-lg shadow-sm focus:border-pink-500 focus:ring-4 focus:ring-pink-100 focus:outline-none transition-all duration-200 resize-none"
+                      className="block w-full px-4 py-3 text-base shadow-sm rounded-lg shadow-sm focus:border-pink-500 focus:ring-4 focus:ring-pink-100 focus:outline-none transition-all duration-200 resize-none"
                       placeholder="Write your Instagram caption..."
                     />
                     <div className="flex justify-between text-xs mt-1">
@@ -3763,7 +3799,7 @@ Best regards,
                       value={instagramContent.hashtags}
                       onChange={(e) => setInstagramContent(prev => ({ ...prev, hashtags: e.target.value }))}
                       rows={3}
-                      className="block w-full px-4 py-3 text-base border-2 border-gray-300 rounded-lg shadow-sm focus:border-pink-500 focus:ring-4 focus:ring-pink-100 focus:outline-none transition-all duration-200 resize-none"
+                      className="block w-full px-4 py-3 text-base shadow-sm rounded-lg shadow-sm focus:border-pink-500 focus:ring-4 focus:ring-pink-100 focus:outline-none transition-all duration-200 resize-none"
                       placeholder="#technology #business #innovation #tips"
                     />
                     <p className="text-xs text-gray-500 mt-1">Use 5-10 relevant hashtags for better reach</p>
@@ -3778,7 +3814,7 @@ Best regards,
                       type="text"
                       value={instagramContent.cta}
                       onChange={(e) => setInstagramContent(prev => ({ ...prev, cta: e.target.value }))}
-                      className="block w-full px-4 py-3 text-base border-2 border-gray-300 rounded-lg shadow-sm focus:border-pink-500 focus:ring-4 focus:ring-pink-100 focus:outline-none transition-all duration-200"
+                      className="block w-full px-4 py-3 text-base shadow-sm rounded-lg shadow-sm focus:border-pink-500 focus:ring-4 focus:ring-pink-100 focus:outline-none transition-all duration-200"
                       placeholder="Check out the full article in our bio! 🔗"
                     />
                     <p className="text-xs text-gray-500 mt-1">Encourage engagement and action</p>
@@ -3796,7 +3832,7 @@ Best regards,
                       type="url"
                       value={instagramContent.imageSource}
                       onChange={(e) => setInstagramContent(prev => ({ ...prev, imageSource: e.target.value }))}
-                      className="block w-full px-4 py-3 text-base border-2 border-gray-300 rounded-lg shadow-sm focus:border-pink-500 focus:ring-4 focus:ring-pink-100 focus:outline-none transition-all duration-200"
+                      className="block w-full px-4 py-3 text-base shadow-sm rounded-lg shadow-sm focus:border-pink-500 focus:ring-4 focus:ring-pink-100 focus:outline-none transition-all duration-200"
                       placeholder="https://example.com/image.jpg"
                     />
                     <p className="text-xs text-gray-500 mt-1">Square format (1:1) works best for Instagram</p>
@@ -3805,7 +3841,7 @@ Best regards,
                     {instagramContent.imageSource && (
                       <div className="mt-3">
                         <div className="text-xs font-medium text-gray-700 mb-2">Preview:</div>
-                        <div className="border-2 border-gray-200 rounded-lg overflow-hidden">
+                        <div className="shadow-md rounded-lg overflow-hidden">
                           <img
                             src={instagramContent.imageSource}
                             alt="Instagram post preview"
@@ -3836,14 +3872,14 @@ Best regards,
                       type="text"
                       value={instagramContent.mentions}
                       onChange={(e) => setInstagramContent(prev => ({ ...prev, mentions: e.target.value }))}
-                      className="block w-full px-4 py-3 text-base border-2 border-gray-300 rounded-lg shadow-sm focus:border-pink-500 focus:ring-4 focus:ring-pink-100 focus:outline-none transition-all duration-200"
+                      className="block w-full px-4 py-3 text-base shadow-sm rounded-lg shadow-sm focus:border-pink-500 focus:ring-4 focus:ring-pink-100 focus:outline-none transition-all duration-200"
                       placeholder="@videotoblog @partner"
                     />
                     <p className="text-xs text-gray-500 mt-1">Tag relevant accounts to increase visibility</p>
                   </div>
 
                   {/* Post Preview */}
-                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                  <div className="bg-gray-50 rounded-lg p-4 shadow-sm">
                     <div className="text-sm font-medium text-gray-700 mb-3 flex items-center">
                       <svg className="w-4 h-4 mr-2 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -3856,7 +3892,7 @@ Best regards,
                         <div className="text-gray-900 whitespace-pre-wrap">{instagramContent.caption}</div>
                       )}
                       {instagramContent.hashtags && (
-                        <div className="text-blue-600">{instagramContent.hashtags}</div>
+                        <div className="text-[#FF385C]">{instagramContent.hashtags}</div>
                       )}
                       {instagramContent.mentions && (
                         <div className="text-purple-600">{instagramContent.mentions}</div>
@@ -3871,19 +3907,20 @@ Best regards,
             </div>
 
             {/* Modal Footer */}
-            <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-between items-center">
+            <div className="px-6 py-4 shadow-sm bg-gray-50 flex justify-between items-center">
               <button
                 onClick={() => setShowInstagramModal(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white shadow-sm rounded-lg hover:bg-gray-50 transition-colors"
               >
                 Cancel
               </button>
               
               <div className="flex space-x-3">
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     const fullContent = `${instagramContent.caption}\n\n${instagramContent.hashtags}\n\n${instagramContent.mentions}\n\n${instagramContent.cta}`;
-                    navigator.clipboard.writeText(fullContent).then(() => {
+                    const success = await safeClipboardWrite(fullContent);
+                    if (success) {
                       // Show success notification
                       const notification = document.createElement('div');
                       notification.className = 'fixed top-4 right-4 bg-pink-600 text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-opacity duration-300';
@@ -3901,17 +3938,18 @@ Best regards,
                         notification.style.opacity = '0';
                         setTimeout(() => document.body.removeChild(notification), 300);
                       }, 3000);
-                    });
+                    }
                   }}
-                  className="px-4 py-2 text-sm font-medium text-pink-700 bg-pink-100 border border-pink-300 rounded-lg hover:bg-pink-200 transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-pink-700 bg-pink-100 shadow-sm rounded-lg hover:bg-pink-200 transition-colors"
                 >
                   📋 Copy Content
                 </button>
                 
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     const fullContent = `${instagramContent.caption}\n\n${instagramContent.hashtags}\n\n${instagramContent.mentions}\n\n${instagramContent.cta}`;
-                    navigator.clipboard.writeText(fullContent).then(() => {
+                    const success = await safeClipboardWrite(fullContent);
+                    if (success) {
                       // Show success notification
                       const notification = document.createElement('div');
                       notification.className = 'fixed top-4 right-4 bg-pink-600 text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-opacity duration-300';
@@ -3929,10 +3967,10 @@ Best regards,
                         notification.style.opacity = '0';
                         setTimeout(() => document.body.removeChild(notification), 300);
                       }, 3000);
-                    });
+                    }
                     setShowInstagramModal(false);
                   }}
-                  className="px-6 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 border border-transparent rounded-lg hover:from-purple-700 hover:via-pink-700 hover:to-orange-600 transition-colors flex items-center"
+                  className="px-6 py-2 text-sm font-medium text-white bg-purple-600 shadow-sm rounded-lg hover:bg-purple-700 transition-colors flex items-center"
                 >
                   <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
@@ -3950,7 +3988,7 @@ Best regards,
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-gray-200 bg-black">
+            <div className="px-6 py-4 shadow-sm bg-black">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
@@ -3988,7 +4026,7 @@ Best regards,
                       value={twitterContent.text}
                       onChange={(e) => setTwitterContent(prev => ({ ...prev, text: e.target.value }))}
                       rows={4}
-                      className="block w-full px-4 py-3 text-base border-2 border-gray-300 rounded-lg shadow-sm focus:border-black focus:ring-4 focus:ring-gray-100 focus:outline-none transition-all duration-200 resize-none"
+                      className="block w-full px-4 py-3 text-base shadow-sm rounded-lg shadow-sm focus:border-black focus:ring-4 focus:ring-gray-100 focus:outline-none transition-all duration-200 resize-none"
                       placeholder="What's happening?"
                     />
                     <div className="flex justify-between text-xs mt-1">
@@ -4008,7 +4046,7 @@ Best regards,
                       type="text"
                       value={twitterContent.hashtags}
                       onChange={(e) => setTwitterContent(prev => ({ ...prev, hashtags: e.target.value }))}
-                      className="block w-full px-4 py-3 text-base border-2 border-gray-300 rounded-lg shadow-sm focus:border-black focus:ring-4 focus:ring-gray-100 focus:outline-none transition-all duration-200"
+                      className="block w-full px-4 py-3 text-base shadow-sm rounded-lg shadow-sm focus:border-black focus:ring-4 focus:ring-gray-100 focus:outline-none transition-all duration-200"
                       placeholder="#technology #business #innovation"
                     />
                     <p className="text-xs text-gray-500 mt-1">Use 1-3 relevant hashtags for better discoverability</p>
@@ -4023,7 +4061,7 @@ Best regards,
                       type="text"
                       value={twitterContent.mentions}
                       onChange={(e) => setTwitterContent(prev => ({ ...prev, mentions: e.target.value }))}
-                      className="block w-full px-4 py-3 text-base border-2 border-gray-300 rounded-lg shadow-sm focus:border-black focus:ring-4 focus:ring-gray-100 focus:outline-none transition-all duration-200"
+                      className="block w-full px-4 py-3 text-base shadow-sm rounded-lg shadow-sm focus:border-black focus:ring-4 focus:ring-gray-100 focus:outline-none transition-all duration-200"
                       placeholder="@videotoblog @partner"
                     />
                     <p className="text-xs text-gray-500 mt-1">Tag relevant accounts to increase engagement</p>
@@ -4041,7 +4079,7 @@ Best regards,
                       value={twitterContent.thread}
                       onChange={(e) => setTwitterContent(prev => ({ ...prev, thread: e.target.value }))}
                       rows={8}
-                      className="block w-full px-4 py-3 text-base border-2 border-gray-300 rounded-lg shadow-sm focus:border-black focus:ring-4 focus:ring-gray-100 focus:outline-none transition-all duration-200 resize-none"
+                      className="block w-full px-4 py-3 text-base shadow-sm rounded-lg shadow-sm focus:border-black focus:ring-4 focus:ring-gray-100 focus:outline-none transition-all duration-200 resize-none"
                       placeholder="1/3 First tweet...
 
 2/3 Second tweet...
@@ -4052,7 +4090,7 @@ Best regards,
                   </div>
 
                   {/* Post Preview */}
-                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                  <div className="bg-gray-50 rounded-lg p-4 shadow-sm">
                     <div className="text-sm font-medium text-gray-700 mb-3 flex items-center">
                       <svg className="w-4 h-4 mr-2 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 616 0z" />
@@ -4065,13 +4103,13 @@ Best regards,
                         <div className="text-gray-900 whitespace-pre-wrap">{twitterContent.text}</div>
                       )}
                       {twitterContent.hashtags && (
-                        <div className="text-blue-600">{twitterContent.hashtags}</div>
+                        <div className="text-[#FF385C]">{twitterContent.hashtags}</div>
                       )}
                       {twitterContent.mentions && (
-                        <div className="text-blue-600">{twitterContent.mentions}</div>
+                        <div className="text-[#FF385C]">{twitterContent.mentions}</div>
                       )}
                       {twitterContent.thread && (
-                        <div className="mt-3 pt-3 border-t border-gray-200">
+                        <div className="mt-3 pt-3 shadow-sm">
                           <div className="text-xs font-medium text-gray-600 mb-2">Thread Preview:</div>
                           <div className="text-gray-700 whitespace-pre-wrap text-xs">{twitterContent.thread}</div>
                         </div>
@@ -4080,9 +4118,9 @@ Best regards,
                   </div>
 
                   {/* Quick Stats */}
-                  <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                  <div className="bg-[#FAFAFA] rounded-lg p-3 shadow-sm">
                     <div className="text-sm font-medium text-blue-800 mb-2">💡 X Tips</div>
-                    <ul className="text-xs text-blue-700 space-y-1">
+                    <ul className="text-xs text-[#E0314F] space-y-1">
                       <li>• Keep tweets under 280 characters</li>
                       <li>• Use 1-3 hashtags maximum</li>
                       <li>• Ask questions to boost engagement</li>
@@ -4095,19 +4133,20 @@ Best regards,
             </div>
 
             {/* Modal Footer */}
-            <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-between items-center">
+            <div className="px-6 py-4 shadow-sm bg-gray-50 flex justify-between items-center">
               <button
                 onClick={() => setShowTwitterModal(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white shadow-sm rounded-lg hover:bg-gray-50 transition-colors"
               >
                 Cancel
               </button>
               
               <div className="flex space-x-3">
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     const fullContent = `${twitterContent.text}${twitterContent.hashtags ? `\n\n${twitterContent.hashtags}` : ''}${twitterContent.mentions ? `\n${twitterContent.mentions}` : ''}${twitterContent.thread ? `\n\nThread:\n${twitterContent.thread}` : ''}`;
-                    navigator.clipboard.writeText(fullContent).then(() => {
+                    const success = await safeClipboardWrite(fullContent);
+                    if (success) {
                       // Show success notification
                       const notification = document.createElement('div');
                       notification.className = 'fixed top-4 right-4 bg-black text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-opacity duration-300';
@@ -4125,9 +4164,9 @@ Best regards,
                         notification.style.opacity = '0';
                         setTimeout(() => document.body.removeChild(notification), 300);
                       }, 3000);
-                    });
+                    }
                   }}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 shadow-sm rounded-lg hover:bg-gray-200 transition-colors"
                 >
                   📋 Copy Content
                 </button>
@@ -4139,7 +4178,7 @@ Best regards,
                     window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank', 'width=600,height=400');
                     setShowTwitterModal(false);
                   }}
-                  className="px-6 py-2 text-sm font-medium text-white bg-black border border-transparent rounded-lg hover:bg-gray-800 transition-colors flex items-center"
+                  className="px-6 py-2 text-sm font-medium text-white bg-black shadow-sm rounded-lg hover:bg-gray-800 transition-colors flex items-center"
                 >
                   <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
@@ -4157,11 +4196,11 @@ Best regards,
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-gray-200 bg-blue-700">
+            <div className="px-6 py-4 shadow-sm bg-[#E0314F]">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-                    <svg className="w-5 h-5 text-blue-700" fill="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 text-[#E0314F]" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
                     </svg>
                   </div>
@@ -4195,7 +4234,7 @@ Best regards,
                       type="text"
                       value={linkedInContent.title}
                       onChange={(e) => setLinkedInContent(prev => ({ ...prev, title: e.target.value }))}
-                      className="block w-full px-4 py-3 text-base border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-700 focus:ring-4 focus:ring-blue-100 focus:outline-none transition-all duration-200"
+                      className="block w-full px-4 py-3 text-base shadow-sm rounded-lg shadow-sm focus:border-[#E0314F] focus:ring-4 focus:ring-[#FF385C]/100 focus:outline-none transition-all duration-200"
                       placeholder="Your compelling headline..."
                     />
                     <div className="flex justify-between text-xs mt-1">
@@ -4215,7 +4254,7 @@ Best regards,
                       value={linkedInContent.description}
                       onChange={(e) => setLinkedInContent(prev => ({ ...prev, description: e.target.value }))}
                       rows={8}
-                      className="block w-full px-4 py-3 text-base border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-700 focus:ring-4 focus:ring-blue-100 focus:outline-none transition-all duration-200 resize-none"
+                      className="block w-full px-4 py-3 text-base shadow-sm rounded-lg shadow-sm focus:border-[#E0314F] focus:ring-4 focus:ring-[#FF385C]/100 focus:outline-none transition-all duration-200 resize-none"
                       placeholder="Share your professional insights, key takeaways, and thoughts..."
                     />
                     <div className="flex justify-between text-xs mt-1">
@@ -4235,7 +4274,7 @@ Best regards,
                       type="text"
                       value={linkedInContent.cta}
                       onChange={(e) => setLinkedInContent(prev => ({ ...prev, cta: e.target.value }))}
-                      className="block w-full px-4 py-3 text-base border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-700 focus:ring-4 focus:ring-blue-100 focus:outline-none transition-all duration-200"
+                      className="block w-full px-4 py-3 text-base shadow-sm rounded-lg shadow-sm focus:border-[#E0314F] focus:ring-4 focus:ring-[#FF385C]/100 focus:outline-none transition-all duration-200"
                       placeholder="What are your thoughts? Share your experience in the comments!"
                     />
                     <p className="text-xs text-gray-500 mt-1">Encourage professional discussion and engagement</p>
@@ -4253,7 +4292,7 @@ Best regards,
                       type="url"
                       value={linkedInContent.imageSource}
                       onChange={(e) => setLinkedInContent(prev => ({ ...prev, imageSource: e.target.value }))}
-                      className="block w-full px-4 py-3 text-base border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-700 focus:ring-4 focus:ring-blue-100 focus:outline-none transition-all duration-200"
+                      className="block w-full px-4 py-3 text-base shadow-sm rounded-lg shadow-sm focus:border-[#E0314F] focus:ring-4 focus:ring-[#FF385C]/100 focus:outline-none transition-all duration-200"
                       placeholder="https://example.com/professional-image.jpg"
                     />
                     <p className="text-xs text-gray-500 mt-1">Professional images perform better on LinkedIn</p>
@@ -4262,7 +4301,7 @@ Best regards,
                     {linkedInContent.imageSource && (
                       <div className="mt-3">
                         <div className="text-xs font-medium text-gray-700 mb-2">Preview:</div>
-                        <div className="border-2 border-gray-200 rounded-lg overflow-hidden">
+                        <div className="shadow-md rounded-lg overflow-hidden">
                           <img
                             src={linkedInContent.imageSource}
                             alt="LinkedIn post preview"
@@ -4293,16 +4332,16 @@ Best regards,
                       value={linkedInContent.tags}
                       onChange={(e) => setLinkedInContent(prev => ({ ...prev, tags: e.target.value }))}
                       rows={3}
-                      className="block w-full px-4 py-3 text-base border-2 border-gray-300 rounded-lg shadow-sm focus:border-blue-700 focus:ring-4 focus:ring-blue-100 focus:outline-none transition-all duration-200 resize-none"
+                      className="block w-full px-4 py-3 text-base shadow-sm rounded-lg shadow-sm focus:border-[#E0314F] focus:ring-4 focus:ring-[#FF385C]/100 focus:outline-none transition-all duration-200 resize-none"
                       placeholder="#leadership #technology #business #innovation #professional"
                     />
                     <p className="text-xs text-gray-500 mt-1">Use 3-5 professional hashtags relevant to your industry</p>
                   </div>
 
                   {/* Post Preview */}
-                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                  <div className="bg-gray-50 rounded-lg p-4 shadow-sm">
                     <div className="text-sm font-medium text-gray-700 mb-3 flex items-center">
-                      <svg className="w-4 h-4 mr-2 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4 mr-2 text-[#E0314F]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 616 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                       </svg>
@@ -4316,18 +4355,18 @@ Best regards,
                         <div className="text-gray-700 whitespace-pre-wrap">{linkedInContent.description}</div>
                       )}
                       {linkedInContent.cta && (
-                        <div className="text-blue-700 font-medium">{linkedInContent.cta}</div>
+                        <div className="text-[#E0314F] font-medium">{linkedInContent.cta}</div>
                       )}
                       {linkedInContent.tags && (
-                        <div className="text-blue-600">{linkedInContent.tags}</div>
+                        <div className="text-[#FF385C]">{linkedInContent.tags}</div>
                       )}
                     </div>
                   </div>
 
                   {/* LinkedIn Tips */}
-                  <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                  <div className="bg-[#FAFAFA] rounded-lg p-3 shadow-sm">
                     <div className="text-sm font-medium text-blue-800 mb-2">💡 LinkedIn Best Practices</div>
-                    <ul className="text-xs text-blue-700 space-y-1">
+                    <ul className="text-xs text-[#E0314F] space-y-1">
                       <li>• Start with a compelling hook or question</li>
                       <li>• Share personal insights and experiences</li>
                       <li>• Use line breaks for better readability</li>
@@ -4341,22 +4380,23 @@ Best regards,
             </div>
 
             {/* Modal Footer */}
-            <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-between items-center">
+            <div className="px-6 py-4 shadow-sm bg-gray-50 flex justify-between items-center">
               <button
                 onClick={() => setShowLinkedInModal(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white shadow-sm rounded-lg hover:bg-gray-50 transition-colors"
               >
                 Cancel
               </button>
               
               <div className="flex space-x-3">
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     const fullContent = `${linkedInContent.title}\n\n${linkedInContent.description}\n\n${linkedInContent.cta}\n\n${linkedInContent.tags}\n\nRead the full article: ${window.location.href}`;
-                    navigator.clipboard.writeText(fullContent).then(() => {
+                    const success = await safeClipboardWrite(fullContent);
+                    if (success) {
                       // Show success notification
                       const notification = document.createElement('div');
-                      notification.className = 'fixed top-4 right-4 bg-blue-700 text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-opacity duration-300';
+                      notification.className = 'fixed top-4 right-4 bg-[#E0314F] text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-opacity duration-300';
                       notification.innerHTML = `
                         <div class="flex items-center space-x-2">
                           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -4371,9 +4411,9 @@ Best regards,
                         notification.style.opacity = '0';
                         setTimeout(() => document.body.removeChild(notification), 300);
                       }, 3000);
-                    });
+                    }
                   }}
-                  className="px-4 py-2 text-sm font-medium text-blue-700 bg-blue-100 border border-blue-300 rounded-lg hover:bg-blue-200 transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-[#E0314F] bg-[#FF385C]/10 shadow-sm rounded-lg hover:bg-[#FF385C]/30 transition-colors"
                 >
                   📋 Copy Content
                 </button>
@@ -4386,7 +4426,7 @@ Best regards,
                     window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}&title=${title}&summary=${summary}`, '_blank', 'width=600,height=400');
                     setShowLinkedInModal(false);
                   }}
-                  className="px-6 py-2 text-sm font-medium text-white bg-blue-700 border border-transparent rounded-lg hover:bg-blue-800 transition-colors flex items-center"
+                  className="px-6 py-2 text-sm font-medium text-white bg-[#E0314F] shadow-sm rounded-lg hover:bg-[#D04449] transition-colors flex items-center"
                 >
                   <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
@@ -4404,7 +4444,7 @@ Best regards,
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-gray-200 bg-green-600">
+            <div className="px-6 py-4 shadow-sm bg-green-600">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
@@ -4442,7 +4482,7 @@ Best regards,
                       type="text"
                       value={emailContent.subject}
                       onChange={(e) => setEmailContent(prev => ({ ...prev, subject: e.target.value }))}
-                      className="block w-full px-4 py-3 text-base border-2 border-gray-300 rounded-lg shadow-sm focus:border-green-600 focus:ring-4 focus:ring-green-100 focus:outline-none transition-all duration-200"
+                      className="block w-full px-4 py-3 text-base shadow-sm rounded-lg shadow-sm focus:border-green-600 focus:ring-4 focus:ring-green-100 focus:outline-none transition-all duration-200"
                       placeholder="Compelling subject line that gets opened..."
                     />
                     <div className="flex justify-between text-xs mt-1">
@@ -4462,7 +4502,7 @@ Best regards,
                       type="text"
                       value={emailContent.preheader}
                       onChange={(e) => setEmailContent(prev => ({ ...prev, preheader: e.target.value }))}
-                      className="block w-full px-4 py-3 text-base border-2 border-gray-300 rounded-lg shadow-sm focus:border-green-600 focus:ring-4 focus:ring-green-100 focus:outline-none transition-all duration-200"
+                      className="block w-full px-4 py-3 text-base shadow-sm rounded-lg shadow-sm focus:border-green-600 focus:ring-4 focus:ring-green-100 focus:outline-none transition-all duration-200"
                       placeholder="Preview text that appears after subject line..."
                     />
                     <div className="flex justify-between text-xs mt-1">
@@ -4482,7 +4522,7 @@ Best regards,
                       value={emailContent.content}
                       onChange={(e) => setEmailContent(prev => ({ ...prev, content: e.target.value }))}
                       rows={10}
-                      className="block w-full px-4 py-3 text-base border-2 border-gray-300 rounded-lg shadow-sm focus:border-green-600 focus:ring-4 focus:ring-green-100 focus:outline-none transition-all duration-200 resize-none"
+                      className="block w-full px-4 py-3 text-base shadow-sm rounded-lg shadow-sm focus:border-green-600 focus:ring-4 focus:ring-green-100 focus:outline-none transition-all duration-200 resize-none"
                       placeholder="Write your email content here..."
                     />
                     <div className="flex justify-between text-xs mt-1">
@@ -4500,7 +4540,7 @@ Best regards,
                       type="text"
                       value={emailContent.cta}
                       onChange={(e) => setEmailContent(prev => ({ ...prev, cta: e.target.value }))}
-                      className="block w-full px-4 py-3 text-base border-2 border-gray-300 rounded-lg shadow-sm focus:border-green-600 focus:ring-4 focus:ring-green-100 focus:outline-none transition-all duration-200"
+                      className="block w-full px-4 py-3 text-base shadow-sm rounded-lg shadow-sm focus:border-green-600 focus:ring-4 focus:ring-green-100 focus:outline-none transition-all duration-200"
                       placeholder="Read Full Article"
                     />
                     <p className="text-xs text-gray-500 mt-1">Clear action you want readers to take</p>
@@ -4518,7 +4558,7 @@ Best regards,
                       type="url"
                       value={emailContent.imageSource}
                       onChange={(e) => setEmailContent(prev => ({ ...prev, imageSource: e.target.value }))}
-                      className="block w-full px-4 py-3 text-base border-2 border-gray-300 rounded-lg shadow-sm focus:border-green-600 focus:ring-4 focus:ring-green-100 focus:outline-none transition-all duration-200"
+                      className="block w-full px-4 py-3 text-base shadow-sm rounded-lg shadow-sm focus:border-green-600 focus:ring-4 focus:ring-green-100 focus:outline-none transition-all duration-200"
                       placeholder="https://example.com/email-image.jpg"
                     />
                     <p className="text-xs text-gray-500 mt-1">High-quality image for email header (600px width recommended)</p>
@@ -4527,7 +4567,7 @@ Best regards,
                     {emailContent.imageSource && (
                       <div className="mt-3">
                         <div className="text-xs font-medium text-gray-700 mb-2">Preview:</div>
-                        <div className="border-2 border-gray-200 rounded-lg overflow-hidden">
+                        <div className="shadow-md rounded-lg overflow-hidden">
                           <img
                             src={emailContent.imageSource}
                             alt="Email featured image preview"
@@ -4550,7 +4590,7 @@ Best regards,
                   </div>
 
                   {/* Email Preview */}
-                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                  <div className="bg-gray-50 rounded-lg p-4 shadow-sm">
                     <div className="text-sm font-medium text-gray-700 mb-3 flex items-center">
                       <svg className="w-4 h-4 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 616 0z" />
@@ -4560,7 +4600,7 @@ Best regards,
                     </div>
                     
                     {/* Email Header */}
-                    <div className="bg-white rounded-lg p-3 border border-gray-200 mb-3">
+                    <div className="bg-white rounded-lg p-3 shadow-sm mb-3">
                       <div className="text-xs text-gray-500 mb-1">Subject:</div>
                       <div className="font-semibold text-sm text-gray-900">{emailContent.subject || 'Your Subject Line'}</div>
                       {emailContent.preheader && (
@@ -4572,7 +4612,7 @@ Best regards,
                     </div>
 
                     {/* Email Body Preview */}
-                    <div className="bg-white rounded-lg p-3 border border-gray-200 space-y-2">
+                    <div className="bg-white rounded-lg p-3 shadow-sm space-y-2">
                       {emailContent.content && (
                         <div className="text-xs text-gray-700 whitespace-pre-wrap">{emailContent.content}</div>
                       )}
@@ -4585,7 +4625,7 @@ Best regards,
                   </div>
 
                   {/* Email Marketing Tips */}
-                  <div className="bg-green-50 rounded-lg p-3 border border-green-200">
+                  <div className="bg-green-50 rounded-lg p-3 shadow-sm">
                     <div className="text-sm font-medium text-green-800 mb-2">💡 Email Marketing Best Practices</div>
                     <ul className="text-xs text-green-700 space-y-1">
                       <li>• Write compelling subject lines (under 50 chars)</li>
@@ -4602,19 +4642,20 @@ Best regards,
             </div>
 
             {/* Modal Footer */}
-            <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-between items-center">
+            <div className="px-6 py-4 shadow-sm bg-gray-50 flex justify-between items-center">
               <button
                 onClick={() => setShowEmailModal(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white shadow-sm rounded-lg hover:bg-gray-50 transition-colors"
               >
                 Cancel
               </button>
               
               <div className="flex space-x-3">
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     const fullContent = `Subject: ${emailContent.subject}\n\nPreheader: ${emailContent.preheader}\n\n${emailContent.content}\n\n${emailContent.cta}: ${window.location.href}`;
-                    navigator.clipboard.writeText(fullContent).then(() => {
+                    const success = await safeClipboardWrite(fullContent);
+                    if (success) {
                       // Show success notification
                       const notification = document.createElement('div');
                       notification.className = 'fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-opacity duration-300';
@@ -4632,9 +4673,9 @@ Best regards,
                         notification.style.opacity = '0';
                         setTimeout(() => document.body.removeChild(notification), 300);
                       }, 3000);
-                    });
+                    }
                   }}
-                  className="px-4 py-2 text-sm font-medium text-green-700 bg-green-100 border border-green-300 rounded-lg hover:bg-green-200 transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-green-700 bg-green-100 shadow-sm rounded-lg hover:bg-green-200 transition-colors"
                 >
                   📋 Copy Email Content
                 </button>
@@ -4646,7 +4687,7 @@ Best regards,
                     window.open(`mailto:?subject=${subject}&body=${body}`, '_self');
                     setShowEmailModal(false);
                   }}
-                  className="px-6 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-lg hover:bg-green-700 transition-colors flex items-center"
+                  className="px-6 py-2 text-sm font-medium text-white bg-green-600 shadow-sm rounded-lg hover:bg-green-700 transition-colors flex items-center"
                 >
                   <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -4664,10 +4705,10 @@ Best regards,
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto transform transition-all duration-200 scale-100">
             {/* Modal Header */}
-            <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
+            <div className="p-6 shadow-sm bg-[#FAFAFA]">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <div className="w-12 h-12 bg-[#FF385C] rounded-xl flex items-center justify-center shadow-lg">
                     <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
                     </svg>
@@ -4691,10 +4732,10 @@ Best regards,
             {/* Modal Content */}
             <div className="p-6">
               {/* Blog Post Preview */}
-              <div className="bg-gray-50 rounded-xl p-4 mb-6 border border-gray-200">
+              <div className="bg-gray-50 rounded-xl p-4 mb-6 shadow-sm">
                 <div className="flex items-center space-x-4">
-                  <div className="w-16 h-12 bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg flex items-center justify-center">
-                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-16 h-12 bg-[#FF385C]/10 rounded-lg flex items-center justify-center">
+                    <svg className="w-6 h-6 text-[#FF385C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                   </div>
@@ -4721,19 +4762,19 @@ Best regards,
               {/* Publishing Platform Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {/* WordPress Platform */}
-                <div className="group relative bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-blue-300 hover:shadow-lg transition-all duration-300 cursor-pointer"
+                <div className="group relative bg-white shadow-md rounded-xl p-6 hover:border-blue-300 hover:shadow-lg transition-all duration-300 cursor-pointer"
                      onClick={() => {
                        setShowPublishModal(false);
                        setShowWordPressModal(true);
                      }}>
                   <div className="flex items-center justify-between mb-4">
-                    <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300">
+                    <div className="w-12 h-12 bg-[#FF385C] rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300">
                       <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M21.469 6.825c.84 1.537 1.318 3.3 1.318 5.175 0 3.979-2.156 7.456-5.363 9.325l3.295-9.527c.615-1.54.82-2.771.82-3.864 0-.405-.026-.78-.07-1.109m-7.981.105c.647-.03 1.232-.105 1.232-.105.582-.075.514-.93-.067-.899 0 0-1.755.135-2.88.135-1.064 0-2.85-.135-2.85-.135-.584-.031-.661.854-.067.899 0 0 .584.075 1.207.105l1.795 4.913-2.52 7.56L5.175 9.295c.42-.03.81-.105.81-.105.582-.075.516-.93-.065-.899 0 0-1.756.135-2.88.135C2.775 8.426 2.616 8.416 2.414 8.398A9.968 9.968 0 0 1 12 2c2.769 0 5.29 1.12 7.109 2.933-.045-.003-.087-.009-.138-.009-1.065 0-1.81.93-1.81 1.927 0 .9.517 1.65 1.067 2.55.42.75.914 1.717.914 3.113 0 .966-.37 2.085-.855 3.641L15.85 19.95a10.016 10.016 0 0 0 3.105-7.363c0-3.452-1.725-6.497-4.35-8.29l2.883 8.531zM12 22C6.486 22 2 17.514 2 12S6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/>
                       </svg>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <span className="text-xs bg-blue-600 text-white px-2 py-1 rounded-full font-medium">Popular</span>
+                      <span className="text-xs bg-[#FF385C] text-white px-2 py-1 rounded-full font-medium">Popular</span>
                     </div>
                   </div>
                   <h3 className="text-lg font-bold text-gray-900 mb-2">WordPress</h3>
@@ -4758,14 +4799,14 @@ Best regards,
                       Custom domains
                     </div>
                   </div>
-                  <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="mt-4 p-3 bg-[#FAFAFA] rounded-lg shadow-sm">
                     <div className="text-xs font-medium text-blue-800">Best for:</div>
-                    <div className="text-xs text-blue-700 mt-1">Professional blogs, business websites, full customization</div>
+                    <div className="text-xs text-[#E0314F] mt-1">Professional blogs, business websites, full customization</div>
                   </div>
                 </div>
 
                 {/* Medium Platform */}
-                <div className="group relative bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-green-300 hover:shadow-lg transition-all duration-300 cursor-pointer"
+                <div className="group relative bg-white shadow-md rounded-xl p-6 hover:border-green-300 hover:shadow-lg transition-all duration-300 cursor-pointer"
                      onClick={() => {
                        setShowPublishModal(false);
                        setShowMediumModal(true);
@@ -4802,20 +4843,20 @@ Best regards,
                       Publication networks
                     </div>
                   </div>
-                  <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
+                  <div className="mt-4 p-3 bg-green-50 rounded-lg shadow-sm">
                     <div className="text-xs font-medium text-green-800">Best for:</div>
                     <div className="text-xs text-green-700 mt-1">Thought leadership, viral content, reaching new audiences</div>
                   </div>
                 </div>
 
                 {/* Blogger Platform */}
-                <div className="group relative bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-orange-300 hover:shadow-lg transition-all duration-300 cursor-pointer"
+                <div className="group relative bg-white shadow-md rounded-xl p-6 hover:border-orange-300 hover:shadow-lg transition-all duration-300 cursor-pointer"
                      onClick={() => {
                        setShowPublishModal(false);
                        setShowBloggerModal(true);
                      }}>
                   <div className="flex items-center justify-between mb-4">
-                    <div className="w-12 h-12 bg-gradient-to-r from-yellow-500 to-orange-600 rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300">
+                    <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300">
                       <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 616 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
@@ -4853,13 +4894,13 @@ Best regards,
                 </div>
 
                 {/* Ghost Platform */}
-                <div className="group relative bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-gray-300 hover:shadow-lg transition-all duration-300 cursor-pointer"
+                <div className="group relative bg-white shadow-md rounded-xl p-6 hover:border-gray-300 hover:shadow-lg transition-all duration-300 cursor-pointer"
                      onClick={() => {
                        setShowPublishModal(false);
                        alert('Ghost integration is now available! Configure it in Settings first.');
                      }}>
                   <div className="flex items-center justify-between mb-4">
-                    <div className="w-12 h-12 bg-gradient-to-r from-gray-600 to-gray-800 rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300">
+                    <div className="w-12 h-12 bg-gray-700 rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300">
                       <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                       </svg>
@@ -4890,20 +4931,20 @@ Best regards,
                       Newsletter & membership features
                     </div>
                   </div>
-                  <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="mt-4 p-3 bg-gray-50 rounded-lg shadow-sm">
                     <div className="text-xs font-medium text-gray-800">Best for:</div>
                     <div className="text-xs text-gray-700 mt-1">Professional blogs, newsletters, membership sites</div>
                   </div>
                 </div>
 
                 {/* Webflow Platform */}
-                <div className="group relative bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-purple-300 hover:shadow-lg transition-all duration-300 cursor-pointer"
+                <div className="group relative bg-white shadow-md rounded-xl p-6 hover:border-purple-300 hover:shadow-lg transition-all duration-300 cursor-pointer"
                      onClick={() => {
                        setShowPublishModal(false);
                        alert('Webflow integration is now available! Configure it in Settings first.');
                      }}>
                   <div className="flex items-center justify-between mb-4">
-                    <div className="w-12 h-12 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300">
+                    <div className="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300">
                       <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
                       </svg>
@@ -4942,7 +4983,7 @@ Best regards,
               </div>
 
               {/* Coming Soon Section */}
-              <div className="mt-8 pt-6 border-t border-gray-200">
+              <div className="mt-8 pt-6 shadow-sm">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                   <svg className="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -4955,7 +4996,7 @@ Best regards,
                     { name: 'Dev.to', color: 'gray', icon: '👨‍💻' },
                     { name: 'Hashnode', color: 'blue', icon: '#' }
                   ].map((platform) => (
-                    <div key={platform.name} className="relative bg-gray-50 border border-gray-200 rounded-lg p-4 opacity-75">
+                    <div key={platform.name} className="relative bg-gray-50 shadow-sm rounded-lg p-4 opacity-75">
                       <div className="text-center">
                         <div className="text-2xl mb-2">{platform.icon}</div>
                         <div className="font-medium text-gray-600">{platform.name}</div>
@@ -4971,13 +5012,13 @@ Best regards,
             </div>
 
             {/* Modal Footer */}
-            <div className="p-6 border-t border-gray-200 bg-gray-50 flex justify-between items-center">
+            <div className="p-6 shadow-sm bg-gray-50 flex justify-between items-center">
               <div className="text-sm text-gray-600">
                 Choose a platform to get started. You can always publish to multiple platforms later.
               </div>
               <button
                 onClick={() => setShowPublishModal(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white shadow-sm rounded-lg hover:bg-gray-50 transition-colors"
               >
                 Cancel
               </button>

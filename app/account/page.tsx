@@ -14,7 +14,7 @@ export default function AccountPage() {
   if (!isLoaded) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FF385C]"></div>
       </div>
     )
   }
@@ -46,9 +46,9 @@ export default function AccountPage() {
             {/* Header */}
             <div className="mb-8">
               <nav className="flex items-center space-x-2 text-sm mb-8">
-                <Link 
-                  href="/dashboard" 
-                  className="flex items-center text-gray-500 hover:text-blue-600 transition-colors duration-200 font-medium"
+                <Link
+                  href="/dashboard"
+                  className="flex items-center text-gray-500 hover:text-[#FF385C] transition-colors duration-200 font-medium"
                 >
                   <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
@@ -67,11 +67,11 @@ export default function AccountPage() {
               </nav>
 
               {/* Premium Hero Section */}
-              <div className="bg-blue-600 rounded-xl shadow-lg p-4 sm:p-6 text-white mb-6">
+              <div className="bg-[#FF385C] rounded-xl shadow-lg p-4 sm:p-6 text-white mb-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-6">
                     <div className="relative">
-                      <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg ring-2 ring-white/30">
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg">
                         {user?.imageUrl ? (
                           <img 
                             src={user.imageUrl} 
@@ -92,28 +92,28 @@ export default function AccountPage() {
                     </div>
                     <div>
                       <h1 className="text-xl sm:text-2xl font-bold mb-1">{user?.fullName || 'Welcome'}</h1>
-                      <p className="text-blue-100 text-sm sm:text-base">{user?.emailAddresses[0]?.emailAddress}</p>
+                      <p className="text-white/80 text-sm sm:text-base">{user?.emailAddresses[0]?.emailAddress}</p>
                       <div className="flex items-center mt-3 space-x-4">
-                        <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs sm:text-sm font-semibold bg-white/20 backdrop-blur-sm text-white">
+                        <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs sm:text-sm font-semibold bg-white/20 backdrop-blur-sm text-white shadow-sm">
                           <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                           </svg>
                           Verified Account
                         </span>
-                        <span className="text-blue-100 text-xs sm:text-sm">
+                        <span className="text-white/80 text-xs sm:text-sm">
                           Member since {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'N/A'}
                         </span>
                       </div>
                     </div>
                   </div>
                   <div className="hidden lg:grid grid-cols-2 gap-3">
-                    <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
+                    <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 shadow-sm">
                       <div className="text-lg font-bold">Pro</div>
-                      <div className="text-xs text-blue-100">Plan Status</div>
+                      <div className="text-xs text-white/80">Plan Status</div>
                     </div>
-                    <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
+                    <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 shadow-sm">
                       <div className="text-lg font-bold">100%</div>
-                      <div className="text-xs text-blue-100">Profile Complete</div>
+                      <div className="text-xs text-white/80">Profile Complete</div>
                     </div>
                   </div>
                 </div>
@@ -121,8 +121,8 @@ export default function AccountPage() {
             </div>
 
             {/* Premium Tab Navigation */}
-            <div className="bg-white rounded-xl shadow-lg mb-6 overflow-hidden border border-gray-100">
-              <div className="bg-gray-100 p-1">
+            <div className="bg-white rounded-xl shadow-lg mb-6 overflow-hidden">
+              <div className="bg-[#FAFAFA] p-1">
                 <nav className="flex overflow-x-auto bg-white rounded-xl">
                   {tabs.map((tab) => (
                     <button
@@ -130,7 +130,7 @@ export default function AccountPage() {
                       onClick={() => setActiveTab(tab.id)}
                       className={`flex items-center py-4 px-6 font-semibold text-sm transition-all duration-200 whitespace-nowrap ${
                         activeTab === tab.id
-                          ? 'text-white bg-blue-600 shadow-lg rounded-xl mx-1'
+                          ? 'text-white bg-[#FF385C] shadow-lg rounded-xl mx-1'
                           : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-xl mx-1'
                       }`}
                     >
@@ -145,7 +145,7 @@ export default function AccountPage() {
             </div>
 
             {/* Premium Tab Content */}
-            <div className="bg-white rounded-xl shadow-lg border border-gray-100">
+            <div className="bg-white rounded-xl shadow-lg">
               <div className="p-4 sm:p-6">
                 {activeTab === 'profile' && (
                   <div className="space-y-6">
@@ -191,13 +191,13 @@ export default function AccountPage() {
                       </div>
                     </div>
 
-                    <div className="pt-6 border-t border-gray-200">
+                    <div className="pt-6 shadow-sm">
                       <div className="flex items-center justify-between">
                         <div>
                           <h4 className="text-sm font-medium text-gray-900">Profile Settings</h4>
                           <p className="text-sm text-gray-600">Manage your profile information and preferences</p>
                         </div>
-                        <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                        <button className="px-4 py-2 bg-[#FF385C] text-white rounded-md hover:bg-[#E0314F] transition-colors shadow-sm">
                           Edit Profile
                         </button>
                       </div>
@@ -209,7 +209,7 @@ export default function AccountPage() {
                   <div className="space-y-8">
                     <div>
                       <div className="flex items-center mb-6">
-                        <div className="bg-green-500 rounded-lg p-2 mr-3">
+                        <div className="bg-[#00A699] rounded-lg p-2 mr-3 shadow-sm">
                           <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                           </svg>
@@ -217,36 +217,36 @@ export default function AccountPage() {
                         <h3 className="text-lg sm:text-xl font-bold text-gray-900">Security Settings</h3>
                       </div>
                       <div className="space-y-4">
-                        <div className="bg-green-50 p-4 border border-green-200 rounded-lg">
+                        <div className="bg-[#00A699]/10 p-4 shadow-sm rounded-lg">
                           <div className="flex items-center">
-                            <div className="bg-green-500 rounded-lg p-2 mr-4">
+                            <div className="bg-[#00A699] rounded-lg p-2 mr-4 shadow-sm">
                               <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
                                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                               </svg>
                             </div>
                             <div>
-                              <h4 className="font-bold text-green-900">Email Verified</h4>
-                              <p className="text-sm text-green-700">Your email address has been verified</p>
+                              <h4 className="font-bold text-[#484848]">Email Verified</h4>
+                              <p className="text-sm text-[#767676]">Your email address has been verified</p>
                             </div>
                           </div>
                         </div>
 
-                        <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                        <div className="flex items-center justify-between p-4 bg-[#FAFAFA] shadow-sm rounded-lg">
                           <div>
                             <h4 className="font-bold text-gray-900">Two-Factor Authentication</h4>
                             <p className="text-sm text-gray-600">Add an extra layer of security to your account</p>
                           </div>
-                          <button className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 text-sm font-semibold">
+                          <button className="px-3 py-2 bg-[#FF385C] text-white rounded-lg hover:bg-[#E0314F] transition-all duration-200 text-sm font-semibold shadow-sm">
                             Enable 2FA
                           </button>
                         </div>
 
-                        <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                        <div className="flex items-center justify-between p-4 bg-[#FAFAFA] shadow-sm rounded-lg">
                           <div>
                             <h4 className="font-bold text-gray-900">Password</h4>
                             <p className="text-sm text-gray-600">Last changed: Never</p>
                           </div>
-                          <button className="px-3 py-2 border border-gray-300 text-gray-700 bg-white rounded-lg hover:bg-gray-50 transition-all duration-200 text-sm font-semibold">
+                          <button className="px-3 py-2 shadow-sm text-gray-700 bg-white rounded-lg hover:bg-gray-50 transition-all duration-200 text-sm font-semibold">
                             Change Password
                           </button>
                         </div>
@@ -263,7 +263,7 @@ export default function AccountPage() {
                   <div className="space-y-8">
                     <div>
                       <div className="flex items-center mb-6">
-                        <div className="bg-orange-500 rounded-lg p-2 mr-3">
+                        <div className="bg-[#FC642D] rounded-lg p-2 mr-3 shadow-sm">
                           <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                           </svg>
@@ -278,14 +278,14 @@ export default function AccountPage() {
                           { title: 'Product Updates', description: 'Stay informed about new features and improvements', enabled: true },
                           { title: 'Marketing Emails', description: 'Receive promotional content and tips', enabled: false }
                         ].map((notification, index) => (
-                          <div key={index} className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg hover:shadow-md transition-shadow duration-200">
+                          <div key={index} className="flex items-center justify-between p-4 bg-[#FAFAFA] shadow-sm rounded-lg hover:shadow-md transition-shadow duration-200">
                             <div>
                               <h4 className="font-bold text-gray-900">{notification.title}</h4>
                               <p className="text-sm text-gray-600">{notification.description}</p>
                             </div>
                             <label className="relative inline-flex items-center cursor-pointer">
                               <input type="checkbox" defaultChecked={notification.enabled} className="sr-only peer" />
-                              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[#FF385C]/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#FF385C]"></div>
                             </label>
                           </div>
                         ))}
@@ -297,7 +297,7 @@ export default function AccountPage() {
             </div>
 
             {/* Premium Danger Zone */}
-            <div className="mt-6 bg-white rounded-xl shadow-lg border border-red-200 overflow-hidden">
+            <div className="mt-6 bg-white rounded-xl shadow-lg overflow-hidden">
               <div className="px-4 sm:px-6 py-4 bg-red-600 text-white">
                 <h3 className="text-lg font-bold flex items-center">
                   <div className="bg-white/20 backdrop-blur-sm rounded-lg p-2 mr-3">

@@ -1,11 +1,11 @@
 import './globals.css'
 import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
+import { Plus_Jakarta_Sans } from 'next/font/google'
 import { ClerkProvider } from '@clerk/nextjs'
 import ToastProvider from './components/ToastProvider'
 import { AnalyticsProvider, ErrorBoundary } from '@/components/AnalyticsProvider'
 
-const inter = Inter({ subsets: ['latin'] })
+const plusJakarta = Plus_Jakarta_Sans({ subsets: ['latin'], weight: ['400', '500', '600', '700', '800'] })
 
 export const metadata: Metadata = {
   title: 'VideoBlog AI - Transform Videos into Engaging Blog Posts',
@@ -39,7 +39,7 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en" className="scroll-smooth">
-        <body className={inter.className}>
+        <body className={plusJakarta.className}>
           <ErrorBoundary>
             <AnalyticsProvider>
               <ToastProvider />

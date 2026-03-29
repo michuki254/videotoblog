@@ -1,5 +1,4 @@
 // Analytics wrapper for Google Analytics and custom tracking
-import Settings from '@/models/Settings'
 
 declare global {
   interface Window {

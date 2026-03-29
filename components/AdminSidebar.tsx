@@ -14,6 +14,7 @@ import {
   ShieldCheckIcon,
   Bars3Icon,
   XMarkIcon,
+  EnvelopeIcon,
 } from '@heroicons/react/24/outline'
 
 interface AdminSidebarProps {
@@ -32,6 +33,7 @@ export default function AdminSidebar({ isSidebarOpen, setIsSidebarOpen, user }: 
     { name: 'Subscriptions', href: '/admin/subscriptions', icon: CreditCardIcon },
     { name: 'Analytics', href: '/admin/analytics', icon: ChartBarIcon },
     { name: 'Content', href: '/admin/content', icon: DocumentTextIcon },
+    { name: 'Contacts', href: '/admin/contacts', icon: EnvelopeIcon },
     { name: 'Settings', href: '/admin/settings', icon: CogIcon },
   ]
 

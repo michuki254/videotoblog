@@ -1,6 +1,5 @@
 // Error monitoring with Sentry
 import * as Sentry from '@sentry/nextjs'
-import Settings from '@/models/Settings'
 
 class ErrorMonitoring {
   private static instance: ErrorMonitoring

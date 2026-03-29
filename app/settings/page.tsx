@@ -809,7 +809,7 @@ export default function SettingsPage() {
   if (!isLoaded) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#FF385C]"></div>
       </div>
     )
   }
@@ -820,9 +820,9 @@ export default function SettingsPage() {
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
           <p className="text-gray-600 mb-4">Please sign in to access settings.</p>
-          <Link 
+          <Link
             href="/sign-in"
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+            className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-xl shadow-md text-white bg-[#FF385C] hover:bg-[#E0314F]"
           >
             Sign In
           </Link>
@@ -839,9 +839,9 @@ export default function SettingsPage() {
             {/* Premium Header */}
             <div className="mb-8">
               <nav className="flex items-center space-x-2 text-sm mb-8">
-                <Link 
-                  href="/dashboard" 
-                  className="flex items-center text-gray-500 hover:text-blue-600 transition-colors duration-200 font-medium"
+                <Link
+                  href="/dashboard"
+                  className="flex items-center text-gray-500 hover:text-[#FF385C] transition-colors duration-200 font-medium"
                 >
                   <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
@@ -860,9 +860,9 @@ export default function SettingsPage() {
               </span>
             </nav>
             
-            <div className="bg-white rounded-lg shadow-sm p-6">
+            <div className="bg-white rounded-xl shadow-lg p-6">
               {/* Premium Hero Section */}
-              <div className="bg-blue-600 rounded-lg shadow-lg p-4 text-white mb-6">
+              <div className="bg-[#FF385C] rounded-xl shadow-lg p-4 text-white mb-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
                     <div className="bg-white/20 backdrop-blur-sm rounded-lg p-2 mr-3">
@@ -873,34 +873,34 @@ export default function SettingsPage() {
                     </div>
                     <div>
                       <h1 className="text-lg sm:text-xl font-bold">Integration Hub</h1>
-                      <p className="text-blue-100 text-xs sm:text-sm hidden sm:block">Connect your blogging platforms</p>
+                      <p className="text-white/80 text-xs sm:text-sm hidden sm:block">Connect your blogging platforms</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-xs text-blue-100 hidden sm:block">Logged in as</div>
+                    <div className="text-xs text-white/80 hidden sm:block">Logged in as</div>
                     <div className="text-white text-xs sm:text-sm font-medium bg-white/20 backdrop-blur-sm rounded px-2 py-1">
                       {user.emailAddresses[0]?.emailAddress}
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Compact Stats */}
                 <div className="grid grid-cols-4 gap-2 mt-3">
-                  <div className="bg-white/10 backdrop-blur-sm rounded p-2 border border-white/20">
+                  <div className="bg-white/10 backdrop-blur-sm rounded p-2 shadow-sm">
                     <div className="text-lg font-bold">{[savedConfig, savedMediumConfig, savedBloggerConfig, savedGhostConfig, savedWebflowConfig].filter(Boolean).length}</div>
-                    <div className="text-[10px] text-blue-100">Active</div>
+                    <div className="text-[10px] text-white/80">Active</div>
                   </div>
-                  <div className="bg-white/10 backdrop-blur-sm rounded p-2 border border-white/20">
+                  <div className="bg-white/10 backdrop-blur-sm rounded p-2 shadow-sm">
                     <div className="text-lg font-bold">5</div>
-                    <div className="text-[10px] text-blue-100">Platforms</div>
+                    <div className="text-[10px] text-white/80">Platforms</div>
                   </div>
-                  <div className="bg-white/10 backdrop-blur-sm rounded p-2 border border-white/20">
+                  <div className="bg-white/10 backdrop-blur-sm rounded p-2 shadow-sm">
                     <div className="text-lg font-bold">∞</div>
-                    <div className="text-[10px] text-blue-100">Posts</div>
+                    <div className="text-[10px] text-white/80">Posts</div>
                   </div>
-                  <div className="bg-white/10 backdrop-blur-sm rounded p-2 border border-white/20">
+                  <div className="bg-white/10 backdrop-blur-sm rounded p-2 shadow-sm">
                     <div className="text-lg font-bold">API</div>
-                    <div className="text-[10px] text-blue-100">Ready</div>
+                    <div className="text-[10px] text-white/80">Ready</div>
                   </div>
                 </div>
               </div>
@@ -908,42 +908,42 @@ export default function SettingsPage() {
           </div>
 
           {/* Premium Active Integrations Card */}
-          <div className="mb-4 bg-gray-100 rounded-lg p-3 border border-gray-200">
-            <div className="flex items-center mb-2">
-              <div className="bg-blue-500 rounded p-1 mr-2">
+          <div className="mb-4 bg-[#FAFAFA] rounded-xl p-4 shadow-lg">
+            <div className="flex items-center mb-3">
+              <div className="bg-[#00A699] rounded-lg p-2 mr-2">
                 <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
-              <h3 className="text-sm font-semibold text-gray-900">Active Integrations</h3>
+              <h3 className="text-sm font-semibold text-[#484848]">Active Integrations</h3>
             </div>
             <div className="flex flex-wrap gap-2">
               {savedConfig && (
-                <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium bg-green-500 text-white">
+                <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-[#00A699] text-white shadow-sm">
                   <CheckCircleIcon className="w-3 h-3 mr-1" />
                   WordPress: {wordpressConfig.url}
                 </span>
               )}
               {savedMediumConfig && (
-                <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium bg-purple-500 text-white">
+                <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-[#00A699] text-white shadow-sm">
                   <CheckCircleIcon className="w-3 h-3 mr-1" />
                   Medium: Connected
                 </span>
               )}
               {savedBloggerConfig && (
-                <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium bg-orange-500 text-white">
+                <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-[#FC642D] text-white shadow-sm">
                   <CheckCircleIcon className="w-3 h-3 mr-1" />
                   Blogger: {bloggerConfig.blogName || 'Connected'}
                 </span>
               )}
               {savedGhostConfig && (
-                <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium bg-gray-700 text-white">
+                <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-[#484848] text-white shadow-sm">
                   <CheckCircleIcon className="w-3 h-3 mr-1" />
                   Ghost: {ghostConfig.blogName || ghostConfig.url}
                 </span>
               )}
               {savedWebflowConfig && (
-                <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium bg-blue-500 text-white">
+                <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-[#00A699] text-white shadow-sm">
                   <CheckCircleIcon className="w-3 h-3 mr-1" />
                   Webflow: {webflowConfig.siteName || 'Connected'}
                 </span>
@@ -960,7 +960,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Premium Tab Navigation */}
-          <div className="bg-white rounded-2xl shadow-xl mb-8 overflow-hidden border border-gray-100">
+          <div className="bg-white rounded-2xl shadow-lg mb-8 overflow-hidden">
             <div className="bg-gray-100 p-1">
               <nav className="flex overflow-x-auto bg-white rounded-xl">
                 {tabs.map((tab) => (
@@ -969,7 +969,7 @@ export default function SettingsPage() {
                     onClick={() => setActiveTab(tab.id)}
                     className={`relative px-6 py-4 text-sm font-semibold whitespace-nowrap transition-all duration-200 ${
                       activeTab === tab.id
-                        ? 'text-white bg-blue-600 shadow-lg rounded-xl mx-1'
+                        ? 'text-white bg-[#FF385C] shadow-lg rounded-xl mx-1'
                         : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-xl mx-1'
                     }`}
                   >
@@ -986,7 +986,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Premium Tab Content */}
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-100">
+          <div className="bg-white rounded-2xl shadow-xl shadow-lg">
             {activeTab === 'wordpress' && (
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
@@ -996,7 +996,7 @@ export default function SettingsPage() {
                   </div>
                   <button
                     onClick={() => setShowInstructions(showInstructions === 'wordpress' ? null : 'wordpress')}
-                    className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center"
+                    className="text-[#FF385C] hover:text-blue-700 text-sm font-medium flex items-center"
                   >
                     <QuestionMarkCircleIcon className="w-5 h-5 mr-1" />
                     How to Configure
@@ -1005,7 +1005,7 @@ export default function SettingsPage() {
 
                 {/* Instructions */}
                 {showInstructions === 'wordpress' && (
-                  <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="mb-6 bg-[#FAFAFA] shadow-sm rounded-lg p-4">
                     <h3 className="font-semibold text-blue-900 mb-3">{instructions.wordpress.title}</h3>
                     <ol className="list-decimal list-inside space-y-2 text-sm text-blue-800">
                       {instructions.wordpress.steps.map((step, index) => (
@@ -1051,7 +1051,7 @@ export default function SettingsPage() {
                 <div>
                   <button
                     onClick={() => setShowWordPressForm(!showWordPressForm)}
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                    className="inline-flex items-center px-4 py-2 shadow-sm rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
                   >
                     {showWordPressForm ? 'Hide Form' : savedConfig ? 'Update Configuration' : 'Add Configuration'}
                   </button>
@@ -1068,7 +1068,7 @@ export default function SettingsPage() {
                           value={wordpressConfig.url}
                           onChange={(e) => setWordpressConfig({ ...wordpressConfig, url: e.target.value })}
                           placeholder="https://yourblog.wordpress.com"
-                          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                          className="mt-1 block w-full px-3 py-2 shadow-sm rounded-md shadow-sm focus:ring-[#FF385C] focus:border-[#FF385C] sm:text-sm"
                         />
                         <p className="mt-1 text-xs text-gray-500">The full URL of your WordPress site</p>
                       </div>
@@ -1082,7 +1082,7 @@ export default function SettingsPage() {
                           id="wp-username"
                           value={wordpressConfig.username}
                           onChange={(e) => setWordpressConfig({ ...wordpressConfig, username: e.target.value })}
-                          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                          className="mt-1 block w-full px-3 py-2 shadow-sm rounded-md shadow-sm focus:ring-[#FF385C] focus:border-[#FF385C] sm:text-sm"
                         />
                         <p className="mt-1 text-xs text-gray-500">Your WordPress admin username</p>
                       </div>
@@ -1097,7 +1097,7 @@ export default function SettingsPage() {
                             id="wp-password"
                             value={wordpressConfig.password}
                             onChange={(e) => setWordpressConfig({ ...wordpressConfig, password: e.target.value })}
-                            className="block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                            className="block w-full px-3 py-2 pr-10 shadow-sm rounded-md shadow-sm focus:ring-[#FF385C] focus:border-[#FF385C] sm:text-sm"
                           />
                           <button
                             type="button"
@@ -1130,7 +1130,7 @@ export default function SettingsPage() {
                         <button
                           onClick={testWordPressConnection}
                           disabled={testingConnection}
-                          className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                          className="inline-flex items-center px-4 py-2 shadow-sm rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
                         >
                           {testingConnection ? (
                             <>
@@ -1143,7 +1143,7 @@ export default function SettingsPage() {
                         </button>
                         <button
                           onClick={saveWordPressConfig}
-                          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                          className="inline-flex items-center px-4 py-2 shadow-sm rounded-md shadow-sm text-sm font-medium text-white bg-[#FF385C] hover:bg-[#E0314F]"
                         >
                           Save Configuration
                         </button>
@@ -1164,7 +1164,7 @@ export default function SettingsPage() {
                   </div>
                   <button
                     onClick={() => setShowInstructions(showInstructions === 'medium' ? null : 'medium')}
-                    className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center"
+                    className="text-[#FF385C] hover:text-blue-700 text-sm font-medium flex items-center"
                   >
                     <QuestionMarkCircleIcon className="w-5 h-5 mr-1" />
                     How to Configure
@@ -1173,7 +1173,7 @@ export default function SettingsPage() {
 
                 {/* Instructions */}
                 {showInstructions === 'medium' && (
-                  <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="mb-6 bg-[#FAFAFA] shadow-sm rounded-lg p-4">
                     <h3 className="font-semibold text-blue-900 mb-3">{instructions.medium.title}</h3>
                     <ol className="list-decimal list-inside space-y-2 text-sm text-blue-800">
                       {instructions.medium.steps.map((step, index) => (
@@ -1225,7 +1225,7 @@ export default function SettingsPage() {
 
                     {/* Available Publications */}
                     {mediumPublications.length > 0 && (
-                      <div className="mt-4 pt-4 border-t border-gray-200">
+                      <div className="mt-4 pt-4 shadow-sm">
                         <h4 className="text-sm font-semibold text-gray-700 mb-2">Available Publications</h4>
                         <div className="space-y-1">
                           {mediumPublications.map((pub) => (
@@ -1244,7 +1244,7 @@ export default function SettingsPage() {
                 <div>
                   <button
                     onClick={() => setShowMediumForm(!showMediumForm)}
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                    className="inline-flex items-center px-4 py-2 shadow-sm rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
                   >
                     {showMediumForm ? 'Hide Form' : savedMediumConfig ? 'Update Configuration' : 'Add Configuration'}
                   </button>
@@ -1262,7 +1262,7 @@ export default function SettingsPage() {
                             value={mediumConfig.accessToken}
                             onChange={(e) => setMediumConfig({ ...mediumConfig, accessToken: e.target.value })}
                             placeholder="Enter your Medium integration token"
-                            className="block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                            className="block w-full px-3 py-2 pr-10 shadow-sm rounded-md shadow-sm focus:ring-[#FF385C] focus:border-[#FF385C] sm:text-sm"
                           />
                           <button
                             type="button"
@@ -1289,7 +1289,7 @@ export default function SettingsPage() {
                           value={mediumConfig.publicationId}
                           onChange={(e) => setMediumConfig({ ...mediumConfig, publicationId: e.target.value })}
                           placeholder="Leave empty to post to personal stories"
-                          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                          className="mt-1 block w-full px-3 py-2 shadow-sm rounded-md shadow-sm focus:ring-[#FF385C] focus:border-[#FF385C] sm:text-sm"
                         />
                         <p className="mt-1 text-xs text-gray-500">The ID of the publication to post to (will be populated after testing connection)</p>
                       </div>
@@ -1307,7 +1307,7 @@ export default function SettingsPage() {
                                 value=""
                                 checked={mediumConfig.publicationId === ''}
                                 onChange={(e) => setMediumConfig({ ...mediumConfig, publicationId: e.target.value })}
-                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                                className="h-4 w-4 text-[#FF385C] focus:ring-[#FF385C] border-gray-300"
                               />
                               <span className="ml-2 text-sm text-gray-700">Personal Stories (No publication)</span>
                             </label>
@@ -1318,7 +1318,7 @@ export default function SettingsPage() {
                                   value={pub.id}
                                   checked={mediumConfig.publicationId === pub.id}
                                   onChange={(e) => setMediumConfig({ ...mediumConfig, publicationId: e.target.value })}
-                                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                                  className="h-4 w-4 text-[#FF385C] focus:ring-[#FF385C] border-gray-300"
                                 />
                                 <span className="ml-2 text-sm text-gray-700">{pub.name}</span>
                               </label>
@@ -1358,7 +1358,7 @@ export default function SettingsPage() {
                         <button
                           onClick={testMediumConnection}
                           disabled={testingMediumConnection}
-                          className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                          className="inline-flex items-center px-4 py-2 shadow-sm rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
                         >
                           {testingMediumConnection ? (
                             <>
@@ -1371,7 +1371,7 @@ export default function SettingsPage() {
                         </button>
                         <button
                           onClick={saveMediumConfig}
-                          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                          className="inline-flex items-center px-4 py-2 shadow-sm rounded-md shadow-sm text-sm font-medium text-white bg-[#FF385C] hover:bg-[#E0314F]"
                         >
                           Save Configuration
                         </button>
@@ -1381,7 +1381,7 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Additional Information */}
-                <div className="mt-8 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div className="mt-8 bg-yellow-50 shadow-sm rounded-lg p-4">
                   <div className="flex">
                     <InformationCircleIcon className="h-5 w-5 text-yellow-400 flex-shrink-0" />
                     <div className="ml-3">
@@ -1408,7 +1408,7 @@ export default function SettingsPage() {
                   </div>
                   <button
                     onClick={() => setShowInstructions(showInstructions === 'blogger' ? null : 'blogger')}
-                    className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center"
+                    className="text-[#FF385C] hover:text-blue-700 text-sm font-medium flex items-center"
                   >
                     <QuestionMarkCircleIcon className="w-5 h-5 mr-1" />
                     How to Configure
@@ -1417,7 +1417,7 @@ export default function SettingsPage() {
 
                 {/* Instructions */}
                 {showInstructions === 'blogger' && (
-                  <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="mb-6 bg-[#FAFAFA] shadow-sm rounded-lg p-4">
                     <h3 className="font-semibold text-blue-900 mb-3">{instructions.blogger.title}</h3>
                     <ol className="list-decimal list-inside space-y-2 text-sm text-blue-800">
                       {instructions.blogger.steps.map((step, index) => (
@@ -1455,7 +1455,7 @@ export default function SettingsPage() {
                             href={bloggerConfig.blogUrl} 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="text-sm font-medium text-blue-600 hover:text-blue-700"
+                            className="text-sm font-medium text-[#FF385C] hover:text-blue-700"
                           >
                             {bloggerConfig.blogUrl}
                           </a>
@@ -1484,7 +1484,7 @@ export default function SettingsPage() {
                 <div>
                   <button
                     onClick={() => setShowBloggerForm(!showBloggerForm)}
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                    className="inline-flex items-center px-4 py-2 shadow-sm rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
                   >
                     {showBloggerForm ? 'Hide Form' : savedBloggerConfig ? 'Update Configuration' : 'Add Configuration'}
                   </button>
@@ -1502,7 +1502,7 @@ export default function SettingsPage() {
                             value={bloggerConfig.apiKey}
                             onChange={(e) => setBloggerConfig({ ...bloggerConfig, apiKey: e.target.value })}
                             placeholder="Enter your Google API key"
-                            className="block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                            className="block w-full px-3 py-2 pr-10 shadow-sm rounded-md shadow-sm focus:ring-[#FF385C] focus:border-[#FF385C] sm:text-sm"
                           />
                           <button
                             type="button"
@@ -1529,7 +1529,7 @@ export default function SettingsPage() {
                           value={bloggerConfig.blogId}
                           onChange={(e) => setBloggerConfig({ ...bloggerConfig, blogId: e.target.value })}
                           placeholder="e.g., 1234567890123456789"
-                          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                          className="mt-1 block w-full px-3 py-2 shadow-sm rounded-md shadow-sm focus:ring-[#FF385C] focus:border-[#FF385C] sm:text-sm"
                         />
                         <p className="mt-1 text-xs text-gray-500">Found in your Blogger dashboard URL after 'blogID='</p>
                       </div>
@@ -1588,7 +1588,7 @@ export default function SettingsPage() {
                         <button
                           onClick={testBloggerConnection}
                           disabled={testingBloggerConnection}
-                          className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                          className="inline-flex items-center px-4 py-2 shadow-sm rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
                         >
                           {testingBloggerConnection ? (
                             <>
@@ -1601,7 +1601,7 @@ export default function SettingsPage() {
                         </button>
                         <button
                           onClick={saveBloggerConfig}
-                          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                          className="inline-flex items-center px-4 py-2 shadow-sm rounded-md shadow-sm text-sm font-medium text-white bg-[#FF385C] hover:bg-[#E0314F]"
                         >
                           Save Configuration
                         </button>
@@ -1611,7 +1611,7 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Additional Information */}
-                <div className="mt-8 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div className="mt-8 bg-yellow-50 shadow-sm rounded-lg p-4">
                   <div className="flex">
                     <InformationCircleIcon className="h-5 w-5 text-yellow-400 flex-shrink-0" />
                     <div className="ml-3">
@@ -1628,7 +1628,7 @@ export default function SettingsPage() {
                 </div>
 
                 {/* API Key Security Tips */}
-                <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="mt-4 bg-[#FAFAFA] shadow-sm rounded-lg p-4">
                   <div className="flex">
                     <InformationCircleIcon className="h-5 w-5 text-blue-400 flex-shrink-0" />
                     <div className="ml-3">
@@ -1655,7 +1655,7 @@ export default function SettingsPage() {
                   </div>
                   <button
                     onClick={() => setShowInstructions(showInstructions === 'ghost' ? null : 'ghost')}
-                    className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center"
+                    className="text-[#FF385C] hover:text-blue-700 text-sm font-medium flex items-center"
                   >
                     <QuestionMarkCircleIcon className="w-5 h-5 mr-1" />
                     How to Configure
@@ -1664,7 +1664,7 @@ export default function SettingsPage() {
 
                 {/* Instructions */}
                 {showInstructions === 'ghost' && (
-                  <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="mb-6 bg-[#FAFAFA] shadow-sm rounded-lg p-4">
                     <h3 className="font-semibold text-blue-900 mb-3">{instructions.ghost.title}</h3>
                     <ol className="list-decimal list-inside space-y-2 text-sm text-blue-800">
                       {instructions.ghost.steps.map((step, index) => (
@@ -1702,7 +1702,7 @@ export default function SettingsPage() {
                             href={ghostConfig.apiUrl} 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="text-sm font-medium text-blue-600 hover:text-blue-700"
+                            className="text-sm font-medium text-[#FF385C] hover:text-blue-700"
                           >
                             {ghostConfig.apiUrl}
                           </a>
@@ -1731,7 +1731,7 @@ export default function SettingsPage() {
                 <div>
                   <button
                     onClick={() => setShowGhostForm(!showGhostForm)}
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                    className="inline-flex items-center px-4 py-2 shadow-sm rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
                   >
                     {showGhostForm ? 'Hide Form' : savedGhostConfig ? 'Update Configuration' : 'Add Configuration'}
                   </button>
@@ -1748,7 +1748,7 @@ export default function SettingsPage() {
                           value={ghostConfig.url}
                           onChange={(e) => setGhostConfig({ ...ghostConfig, url: e.target.value })}
                           placeholder="https://yourblog.com"
-                          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                          className="mt-1 block w-full px-3 py-2 shadow-sm rounded-md shadow-sm focus:ring-[#FF385C] focus:border-[#FF385C] sm:text-sm"
                         />
                         <p className="mt-1 text-xs text-gray-500">The URL of your Ghost site (without /ghost at the end)</p>
                       </div>
@@ -1764,7 +1764,7 @@ export default function SettingsPage() {
                             value={ghostConfig.adminApiKey}
                             onChange={(e) => setGhostConfig({ ...ghostConfig, adminApiKey: e.target.value })}
                             placeholder="1234567890abcdef:1234567890abcdef..."
-                            className="block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm font-mono text-xs"
+                            className="block w-full px-3 py-2 pr-10 shadow-sm rounded-md shadow-sm focus:ring-[#FF385C] focus:border-[#FF385C] sm:text-sm font-mono text-xs"
                           />
                           <button
                             type="button"
@@ -1786,7 +1786,7 @@ export default function SettingsPage() {
                         <h4 className="text-sm font-semibold text-gray-700 mb-2">Admin API Key Format:</h4>
                         <div className="space-y-2 text-xs text-gray-600">
                           <p>The Admin API Key consists of two parts separated by a colon (:)</p>
-                          <p className="font-mono bg-white px-2 py-1 rounded border border-gray-200">
+                          <p className="font-mono bg-white px-2 py-1 rounded shadow-sm">
                             id:secret
                           </p>
                           <p>Example: <span className="font-mono">5f3d4b2a1c9d8e7f6a5b4c3d:2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e7f6a5b4c3d2e1f</span></p>
@@ -1835,7 +1835,7 @@ export default function SettingsPage() {
                         <button
                           onClick={testGhostConnection}
                           disabled={testingGhostConnection}
-                          className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                          className="inline-flex items-center px-4 py-2 shadow-sm rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
                         >
                           {testingGhostConnection ? (
                             <>
@@ -1848,7 +1848,7 @@ export default function SettingsPage() {
                         </button>
                         <button
                           onClick={saveGhostConfig}
-                          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                          className="inline-flex items-center px-4 py-2 shadow-sm rounded-md shadow-sm text-sm font-medium text-white bg-[#FF385C] hover:bg-[#E0314F]"
                         >
                           Save Configuration
                         </button>
@@ -1858,7 +1858,7 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Additional Information */}
-                <div className="mt-8 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div className="mt-8 bg-yellow-50 shadow-sm rounded-lg p-4">
                   <div className="flex">
                     <InformationCircleIcon className="h-5 w-5 text-yellow-400 flex-shrink-0" />
                     <div className="ml-3">
@@ -1876,7 +1876,7 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Ghost Pro vs Self-hosted */}
-                <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="mt-4 bg-[#FAFAFA] shadow-sm rounded-lg p-4">
                   <div className="flex">
                     <InformationCircleIcon className="h-5 w-5 text-blue-400 flex-shrink-0" />
                     <div className="ml-3">
@@ -1903,7 +1903,7 @@ export default function SettingsPage() {
                   </div>
                   <button
                     onClick={() => setShowInstructions(showInstructions === 'webflow' ? null : 'webflow')}
-                    className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center"
+                    className="text-[#FF385C] hover:text-blue-700 text-sm font-medium flex items-center"
                   >
                     <QuestionMarkCircleIcon className="w-5 h-5 mr-1" />
                     How to Configure
@@ -1912,7 +1912,7 @@ export default function SettingsPage() {
 
                 {/* Instructions */}
                 {showInstructions === 'webflow' && (
-                  <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="mb-6 bg-[#FAFAFA] shadow-sm rounded-lg p-4">
                     <h3 className="font-semibold text-blue-900 mb-3">{instructions.webflow.title}</h3>
                     <ol className="list-decimal list-inside space-y-2 text-sm text-blue-800">
                       {instructions.webflow.steps.map((step, index) => (
@@ -1976,7 +1976,7 @@ export default function SettingsPage() {
                 <div>
                   <button
                     onClick={() => setShowWebflowForm(!showWebflowForm)}
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                    className="inline-flex items-center px-4 py-2 shadow-sm rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
                   >
                     {showWebflowForm ? 'Hide Form' : savedWebflowConfig ? 'Update Configuration' : 'Add Configuration'}
                   </button>
@@ -1992,7 +1992,7 @@ export default function SettingsPage() {
                           id="webflow-site-id"
                           value={webflowConfig.siteId}
                           onChange={(e) => setWebflowConfig({ ...webflowConfig, siteId: e.target.value })}
-                          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-[#FF385C] focus:border-[#FF385C] sm:text-sm"
                           placeholder="e.g., 5f7b3d..."
                         />
                         <p className="mt-1 text-xs text-gray-500">
@@ -2010,7 +2010,7 @@ export default function SettingsPage() {
                             id="webflow-api-token"
                             value={webflowConfig.apiToken}
                             onChange={(e) => setWebflowConfig({ ...webflowConfig, apiToken: e.target.value })}
-                            className="block w-full pr-10 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                            className="block w-full pr-10 border-gray-300 rounded-md shadow-sm focus:ring-[#FF385C] focus:border-[#FF385C] sm:text-sm"
                             placeholder="Your Webflow API token"
                           />
                           <button
@@ -2039,7 +2039,7 @@ export default function SettingsPage() {
                           id="webflow-collection-id"
                           value={webflowConfig.collectionId}
                           onChange={(e) => setWebflowConfig({ ...webflowConfig, collectionId: e.target.value })}
-                          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-[#FF385C] focus:border-[#FF385C] sm:text-sm"
                           placeholder="e.g., 5f7b3d..."
                         />
                         <p className="mt-1 text-xs text-gray-500">
@@ -2077,7 +2077,7 @@ export default function SettingsPage() {
                         <button
                           onClick={testWebflowConnection}
                           disabled={testingWebflowConnection}
-                          className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                          className="inline-flex items-center px-4 py-2 shadow-sm rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
                         >
                           {testingWebflowConnection ? (
                             <>
@@ -2090,7 +2090,7 @@ export default function SettingsPage() {
                         </button>
                         <button
                           onClick={saveWebflowConfig}
-                          className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                          className="inline-flex items-center px-4 py-2 shadow-sm rounded-md shadow-sm text-sm font-medium text-white bg-[#FF385C] hover:bg-[#E0314F]"
                         >
                           Save Configuration
                         </button>
@@ -2100,7 +2100,7 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Collection Structure Help */}
-                <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="mt-8 bg-[#FAFAFA] shadow-sm rounded-lg p-4">
                   <div className="flex">
                     <InformationCircleIcon className="h-5 w-5 text-blue-400 flex-shrink-0" />
                     <div className="ml-3">
@@ -2122,7 +2122,7 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Additional Information */}
-                <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div className="mt-4 bg-yellow-50 shadow-sm rounded-lg p-4">
                   <div className="flex">
                     <InformationCircleIcon className="h-5 w-5 text-yellow-400 flex-shrink-0" />
                     <div className="ml-3">
